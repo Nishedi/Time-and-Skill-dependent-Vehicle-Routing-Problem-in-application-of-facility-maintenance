@@ -13,11 +13,15 @@ namespace HCVRPTW
         public double[,] DistanceMatrix;                                        // \mathcal{C} - cost matrix, c_{i,j} - DistanceMatrix[i,j]
         public List<Crew> Crews = new List<Crew>();                             // \mathcal{V} - set of crews, v - Crews.Count
         public string FileName;
+        public List<Crew> crews = new List<Crew>();
+        
+
         public Instance(string filename, int vehicleNumbers = 100)
         {
             FileName = filename;
             ParseSolomonFile(filename);
-            
+            crews.Add(new Crew(0, 0, CrewType.Seniors));
+            crews.Add(new Crew(1, 1, CrewType.Juniors));
         }
 
         public void ParseSolomonFile(string filePath)

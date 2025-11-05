@@ -14,11 +14,37 @@ namespace HCVRPTW
         public CrewType Type;
         public (double startTime, double endTime) WorkingTimeWindow; // (e_v, l_v) - working time window of crew
 
-        public Crew(int id, double capacity, CrewType crewType)
+        public double WorkTime { get; set; }
+        public double afterHoursWorkTime { get; set; }
+        public double afterHoursCost { get; set; }
+        public double serviceTimeMultiplier { get; set; } = 1.0;
+        public Crew(int id, int shift/*first or second*/, CrewType crewType)
         {
             this.Id = id;
-            this.Capacity = capacity;
-            this.Type = crewType;
+
+            if (shift == 0)
+            {
+                this.WorkingTimeWindow = (0, 1236 / 2);
+            }
+            else
+            {
+                this.WorkingTimeWindow = (1236 / 2, 1236);
+            }
+            if (crewType == CrewType.Seniors)
+            {
+                afterHoursCost = 2;
+            }
+            else
+            {
+                afterHoursCost = 1;
+                serviceTimeMultiplier = 1.5;
+            }
+            Type = crewType;
+        }
+        public void computeAfterHours()
+        {
+            afterHoursWorkTime = Math.Max(0, WorkTime - WorkingTimeWindow.endTime);
         }
     }
 }
+
