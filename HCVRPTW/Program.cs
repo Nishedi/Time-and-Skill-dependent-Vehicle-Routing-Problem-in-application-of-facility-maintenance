@@ -1,6 +1,8 @@
 ﻿using HCVRPTW;
 
-Instance instance = new Instance("pliki//CTEST.txt");
+var filePath = "pliki//CTEST.txt";
+filePath = "pliki//100 lokacji//C101.txt";
+Instance instance = new Instance(filePath);
 
 
 var toursNoCrew = new List<Tour>();
@@ -11,7 +13,7 @@ var allLocations = toursNoCrew.SelectMany(t => t.Locations).ToList();
 Crew createCrew(Tour route, List<Crew> crews, int index)
 {
     Crew crew = null;
-    if (route.Locations[1].TimeWindow.Start >= 618)
+    if (route.Locations[1].TimeWindow.Start >= 618-150)
     {
         crew = new Crew(crews[index].Id, 1, crews[index].Type);
     }
@@ -23,16 +25,26 @@ Crew createCrew(Tour route, List<Crew> crews, int index)
 }
 
 
-List<List<Tour>> generateNeighbors(List<Location> allLocations, Instance instance) {
+List<List<Tour>> generateNeighbors(List<Tour> t, Instance instance) {
+    List<Location> allLocations = t.SelectMany(t => t.Locations).ToList();
+    for (int rep = 0; rep < allLocations.Count - 1; rep++)
+    {
+        if (allLocations[rep].Id == 0 && allLocations[rep + 1].Id == 0)
+        {
+            allLocations.RemoveAt(rep);
+        }
+
+
+    }
     //var toursNoCrew = new List<Tour>();
     var scenarios = new List<List<Tour>>();
     for (int i = 1; i < allLocations.Count - 1; i++)
     {
         for (int j = 1; j < i; j++)
 
-    //for (int i = allLocations.Count - 2; i < allLocations.Count - 1; i++)
-    //{
-    //    for (int j = i-1; j < i; j++)
+        //for (int i = allLocations.Count - 2; i < allLocations.Count - 1; i++)
+        //{
+        //    for (int j = i-1; j < i; j++)
         {
             var copy = allLocations.ToList();
             var toSwap = copy[i];
@@ -58,7 +70,7 @@ List<List<Tour>> generateNeighbors(List<Location> allLocations, Instance instanc
                 }
             }
             var tours = new List<Tour>();
-            var crewsCopy = new List<Crew>(instance.crews);
+            var crewsCopy = new List<Crew>(instance.Crews);
             foreach (var route in toursNoCrew)
             {
                 Crew crew = createCrew(route, crewsCopy, toursNoCrew.IndexOf(route));
@@ -71,7 +83,7 @@ List<List<Tour>> generateNeighbors(List<Location> allLocations, Instance instanc
             
                 for (int l = 0; l < k; l++)
                 {
-                    crewsCopy = new List<Crew>(instance.crews);
+                    crewsCopy = new List<Crew>(instance.Crews);
                     if (crewsCopy[k].Type == crewsCopy[l].Type) continue;
                     var crewToSwap = crewsCopy[k];
                     crewsCopy[k] = crewsCopy[l];
@@ -140,95 +152,194 @@ Solution calculateMetrics(List<Tour> tours)
     
 }
 
-var scenarios = generateNeighbors(allLocations, instance);
+//var scenarios = generateNeighbors(allLocations, instance);
+
+//List<Solution> bestsolutions = new List<Solution>();
+//foreach (var tours in scenarios)
+//{
+//   bestsolutions.Add(calculateMetrics(tours));
+//}
+
+//bestsolutions = bestsolutions.OrderBy(s => s.TotalPenalty).ToList();
+//foreach (var sol in bestsolutions.Take(5))
+//{
+//    foreach(var tour in sol.Tours)
+//    {
+//        foreach (var loc in tour.Locations)
+//        {
+//            Console.Write(loc.Id + " ");
+//        }
+//        Console.WriteLine();
+//    }
+//    Console.WriteLine("Total Penalty: " + sol.TotalPenalty);
+//    Console.WriteLine("Total Driving Cost: " + sol.TotalDrivingCost);
+//    Console.WriteLine("Total After Hours Cost: " + sol.TotalAfterHoursCost);
+//    Console.WriteLine("Total Crew Usage Cost: " + sol.TotalCrewUsageCost);
+//    Console.WriteLine("Grand Total: " + sol.GrandTotal);
+//    Console.WriteLine();
+//}
+
+Solution greedy = generateGreedySolution(instance);
+greedy  = calculateMetrics(greedy.Tours);
+var scenarios = generateNeighbors(greedy.Tours, instance);
 
 List<Solution> bestsolutions = new List<Solution>();
 foreach (var tours in scenarios)
 {
-   bestsolutions.Add(calculateMetrics(tours));
+    bestsolutions.Add(calculateMetrics(tours));
 }
 
-bestsolutions = bestsolutions.OrderBy(s => s.TotalPenalty).ToList();
-foreach (var sol in bestsolutions.Take(5))
-{
-    foreach(var tour in sol.Tours)
-    {
-        foreach (var loc in tour.Locations)
-        {
-            Console.Write(loc.Id + " ");
-        }
-        Console.WriteLine();
-    }
-    Console.WriteLine("Total Penalty: " + sol.TotalPenalty);
-    Console.WriteLine("Total Driving Cost: " + sol.TotalDrivingCost);
-    Console.WriteLine("Total After Hours Cost: " + sol.TotalAfterHoursCost);
-    Console.WriteLine("Total Crew Usage Cost: " + sol.TotalCrewUsageCost);
-    Console.WriteLine("Grand Total: " + sol.GrandTotal);
-    Console.WriteLine();
-}
-
-for(int i = 0; i < 15; i++)
-{
-    var randomIndex = new Random().Next(1, 5);
-    allLocations = bestsolutions[randomIndex].Tours.SelectMany(t => t.Locations).ToList();
-    for(int rep = 0; rep<allLocations.Count-1; rep++)
-    {
-        if(allLocations[rep].Id == 0 && allLocations[rep + 1].Id == 0)
-        {
-            allLocations.RemoveAt(rep);
-        }
-        
-        
-    }
-    scenarios = generateNeighbors(allLocations, instance);
-    
-    bestsolutions.Clear();
-    foreach (var tours in scenarios)
-    {
-        bestsolutions.Add(calculateMetrics(tours));
-    }
-
-    bestsolutions = bestsolutions.OrderBy(s => s.TotalPenalty).ToList();
-    Console.WriteLine("Iteration " + (i+1));
-    Console.WriteLine("TotalPenalty: " + bestsolutions[0].TotalPenalty);
-    Console.WriteLine("Grand Total: " + bestsolutions[0].GrandTotal);
-    Console.WriteLine();
-
-}
-
-//foreach (var tours in scenarios)
+bestsolutions = bestsolutions.OrderBy(s => s.GrandTotal).ToList();
+//bestsolutions.Add(greedy);
+//bestsolutions = bestsolutions.OrderBy(s => s.TotalPenalty).ToList();
+;
+//foreach (var sol in bestsolutions.Take(5))
 //{
-//    foreach (var tour in tours)
+//    foreach(var tour in sol.Tours)
 //    {
-//        var crew = tour.Crew;
-//        crew.WorkTime = crew.WorkingTimeWindow.startTime;
-//        Location prevLocation = null;
 //        foreach (var loc in tour.Locations)
 //        {
-//            if (loc.Id != 0)
-//            {
-//                var dist = instance.DistanceMatrix[prevLocation.Id, loc.Id];
-//                var waitingTime = Math.Max(0, Math.Min(loc.ServiceTime, loc.TimeWindow.Start - (crew.WorkTime + dist)));
-//                waitingTime = 0;
-//                crew.WorkTime += loc.ServiceTime * crew.serviceTimeMultiplier + dist + waitingTime;
-//            }
-//            else if (prevLocation != null)
-//            {
-//                var dist = instance.DistanceMatrix[prevLocation.Id, loc.Id];
-//                crew.WorkTime += dist;
-//            }
-//            prevLocation = loc;
+//            Console.Write(loc.Id + " ");
 //        }
-//        crew.computeAfterHours();
-//        foreach (var loc in tour.Locations)
-//        {
-//            Console.Write(loc.Id+" ");
-//        }
-//        Console.WriteLine("| "+crew.Type+" "+crew.WorkTime + " " + crew.afterHoursWorkTime);
+//        Console.WriteLine();
 //    }
-//    if (scenarios.IndexOf(tours) % 2 == 1) Console.WriteLine();
+//    Console.WriteLine("Total Penalty: " + sol.TotalPenalty);
+//    Console.WriteLine("Total Driving Cost: " + sol.TotalDrivingCost);
+//    Console.WriteLine("Total After Hours Cost: " + sol.TotalAfterHoursCost);
+//    Console.WriteLine("Total Crew Usage Cost: " + sol.TotalCrewUsageCost);
+//    Console.WriteLine("Grand Total: " + sol.GrandTotal);
+//    Console.WriteLine();
 //}
 
+Solution generateGreedySolution(Instance instance) //wprowadzic czekanie jezeli sie oplaca
+{
+    var greedyGTR = createGreedyGTR(instance);
+    var result = new List<Tour>();
+    var current = new List<Location>();
+    int numRoutes = 0;
+    var currentLoad = 0.0;
+    foreach (var loc in greedyGTR)
+    {
+        current.Add(loc);
+        currentLoad += loc.Demand;
+        if (loc.Id == 0 && current.Count > 1)
+        {
+            result.Add(new Tour(instance.Crews[numRoutes], new List<Location>(current)));
+            current.Clear();
+            currentLoad = 0.0;
+            current.Add(loc); // zaczynamy nową trasę od bazy
+            numRoutes++;
+        }
+    }
+    // Jeśli coś zostało, dodaj jako ostatnią trasę
+    if (current.Count > 1)
+        result.Add(new Tour(instance.Crews[numRoutes], new List<Location>(current)));
+
+    return new Solution(result);
+}
+List<Location>  createGreedyGTR(Instance instance)
+{
+    double[,] distanceMatrix = instance.DistanceMatrix;
+    List<Location> locations = instance.Locations;
+    List<Crew> Crews = instance.Crews;
+    var initialRoutesSplitted = new List<List<Location>>();
+    var initialRoute = new List<Location>();
+    bool[] visited = new bool[locations.Count];
+    int crewNumber = 0;
+    double vehicleTime = 0;
+    double currentLoad = 0.0;
+
+    initialRoute.Add(locations[0]); 
+
+    while (visited.Contains(false))
+    {
+        Location current = locations[0]; // Start z bazy
+        visited[current.Id] = true;
+        vehicleTime = 0;
+        //currentLoad = 0.0; // Reset załadunku przy starcie nowego pojazdu
+
+        while (true)
+        {
+            Location nextCustomer = null;
+            double minDistance = double.MaxValue;
+
+            foreach (var location in locations)
+            {
+                if (!visited[location.Id] && location.Id != 0)
+                {
+                    double demand = location.Demand;
+                    //double vehicleCapacity = Crews[crewNumber].Capacity;
+
+                    //if (currentLoad + demand > vehicleCapacity)
+                    //    continue; 
+
+                    double distance = distanceMatrix[current.Id, location.Id];
+                    double estimatedUpperTimeLeft = location.TimeWindow.End - (vehicleTime + location.ServiceTime * Crews[crewNumber].serviceTimeMultiplier);
+                    double estimatedLowerTimeLeft = location.TimeWindow.Start - vehicleTime;
+                    double estimatedPenalty = Math.Max(0, estimatedUpperTimeLeft);
+                    estimatedPenalty += Math.Max(0, estimatedLowerTimeLeft);
+                    distance += estimatedPenalty;
+
+                    if (distance < minDistance && 
+                        location.TimeWindow.Start < Crews[crewNumber].WorkingTimeWindow.endTime && 
+                        vehicleTime + location.ServiceTime * Crews[crewNumber].serviceTimeMultiplier < Crews[crewNumber].WorkingTimeWindow.endTime)
+                    {
+                        minDistance = distance;
+                        nextCustomer = location;
+                    }
+                }
+            }
+
+            if (nextCustomer == null && current.Id != 0 || vehicleTime >= locations[0].TimeWindow.End)
+            {
+                initialRoute.Add(locations[0]);
+                crewNumber++;
+                if (crewNumber >= Crews.Count)
+                    return initialRoute;
+                break;
+            }
+            else if (nextCustomer == null && current.Id == 0)
+            {
+                foreach (var location in locations)
+                {
+                    if (!visited[location.Id] && currentLoad + location.Demand <= Crews[crewNumber].Capacity)
+                    {
+                        nextCustomer = location;
+                        break;
+                    }
+                }
+            }
+
+            if (current.Id == 0)
+            {
+                if (nextCustomer!=null&&nextCustomer.TimeWindow.Start >= 518) vehicleTime = 618;
+                else vehicleTime = 0;
+                Crews[crewNumber].WorkingTimeWindow = (vehicleTime, vehicleTime + 618);
+                //vehicleTime = Math.Max(nextCustomer.TimeWindow.Start - distanceMatrix[current.Id, nextCustomer.Id], 0);
+                //vehicleStarts.Add(Math.Max(nextCustomer.TimeWindow.Start - distanceMatrix[current.Id, nextCustomer.Id], 0.0));
+            }
+            vehicleTime += distanceMatrix[current.Id, nextCustomer.Id];
+            //double upperTimeLeft = nextCustomer.TimeWindow.End - vehicleTime;
+            //double lowerTimeLeft = nextCustomer.TimeWindow.Start - vehicleTime;
+            //double penalty = Math.Max(0, nextCustomer.ServiceTime - upperTimeLeft);
+            //penalty += Math.Max(0, Math.Min(lowerTimeLeft, nextCustomer.ServiceTime));
+            vehicleTime += nextCustomer.ServiceTime*Crews[crewNumber].serviceTimeMultiplier;
+            //vehicleTime += penalty;
+
+            initialRoute.Add(nextCustomer);
+            visited[nextCustomer.Id] = true;
+            //currentLoad += nextCustomer.Demand; 
+
+            current = nextCustomer;
+        }
+    }
+
+    if (initialRoute[initialRoute.Count - 1].Id != 0)
+    {
+        initialRoute.Add(locations[0]);
+    }
+    return initialRoute;
+}
 
 
 
