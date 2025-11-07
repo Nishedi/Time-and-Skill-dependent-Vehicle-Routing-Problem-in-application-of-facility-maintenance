@@ -18,6 +18,7 @@ namespace HCVRPTW
         public double afterHoursWorkTime { get; set; }
         public double afterHoursCost { get; set; }
         public double serviceTimeMultiplier { get; set; } = 1.0;
+        public double baseCost { get; set; } = 100;
         public Crew(int id, int shift/*first or second*/, CrewType crewType)
         {
             this.Id = id;
@@ -33,11 +34,13 @@ namespace HCVRPTW
             if (crewType == CrewType.Seniors)
             {
                 afterHoursCost = 2;
+                baseCost = 200;
             }
             else
             {
                 afterHoursCost = 1;
                 serviceTimeMultiplier = 1.5;
+                baseCost = 100;
             }
             Type = crewType;
         }

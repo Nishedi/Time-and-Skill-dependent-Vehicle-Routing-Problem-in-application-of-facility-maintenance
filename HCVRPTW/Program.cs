@@ -1,7 +1,8 @@
 ﻿using HCVRPTW;
+using System.Diagnostics;
 
 var filePath = "pliki//CTEST.txt";
-filePath = "pliki//100 lokacji//C101.txt";
+//filePath = "pliki//100 lokacji//C101.txt";
 Instance instance = new Instance(filePath);
 
 
@@ -25,7 +26,7 @@ Crew createCrew(Tour route, List<Crew> crews, int index)
 }
 
 
-List<List<Tour>> generateNeighbors(List<Tour> t, Instance instance) {
+List<Solution> generateNeighbors(List<Tour> t, Instance instance) {
     List<Location> allLocations = t.SelectMany(t => t.Locations).ToList();
     for (int rep = 0; rep < allLocations.Count - 1; rep++)
     {
@@ -37,7 +38,7 @@ List<List<Tour>> generateNeighbors(List<Tour> t, Instance instance) {
 
     }
     //var toursNoCrew = new List<Tour>();
-    var scenarios = new List<List<Tour>>();
+    var scenarios = new List<Solution>();
     for (int i = 1; i < allLocations.Count - 1; i++)
     {
         for (int j = 1; j < i; j++)
@@ -76,9 +77,12 @@ List<List<Tour>> generateNeighbors(List<Tour> t, Instance instance) {
                 Crew crew = createCrew(route, crewsCopy, toursNoCrew.IndexOf(route));
                 tours.Add(new Tour(crew, route.Locations));
             }
-            scenarios.Add(tours);
-        
-            for(int k = 0; k < crewsCopy.Count; k++)
+            var solution = calculateMetrics(tours);
+            solution.move = (i, j);
+            scenarios.Add(solution);
+
+            //for(int k = 0; k < crewsCopy.Count; k++)
+            for (int k = 0; k < Math.Min(toursNoCrew.Count,crewsCopy.Count); k++)
             {
             
                 for (int l = 0; l < k; l++)
@@ -95,15 +99,17 @@ List<List<Tour>> generateNeighbors(List<Tour> t, Instance instance) {
                         Crew crew = createCrew(route, crewsCopy, toursNoCrew.IndexOf(route));
                         tours.Add(new Tour(crew, route.Locations));
                     }
-
-                    scenarios.Add(tours);
+                    solution = calculateMetrics(tours);
+                    solution.move = (i, j);
+                    scenarios.Add(solution);
                 }
             
             }
 
         }
     }
-    return scenarios;
+
+    return scenarios.OrderBy(s=>s.GrandTotal).ToList();
 }
 
 
@@ -128,7 +134,7 @@ Solution calculateMetrics(List<Tour> tours)
             {
                 var dist = instance.DistanceMatrix[prevLocation.Id, loc.Id];
                 penalty+= Math.Max(0, loc.TimeWindow.Start - (crew.WorkTime + dist));
-                penalty+=Math.Max(0, (crew.WorkTime + dist) - loc.TimeWindow.End);
+                penalty+=Math.Max(0, (crew.WorkTime+dist + loc.ServiceTime * crew.serviceTimeMultiplier) - loc.TimeWindow.End);
                 crew.WorkTime += loc.ServiceTime * crew.serviceTimeMultiplier + dist;
                 drivingCost+= dist;
             }
@@ -183,16 +189,16 @@ Solution greedy = generateGreedySolution(instance);
 greedy  = calculateMetrics(greedy.Tours);
 var scenarios = generateNeighbors(greedy.Tours, instance);
 
-List<Solution> bestsolutions = new List<Solution>();
-foreach (var tours in scenarios)
-{
-    bestsolutions.Add(calculateMetrics(tours));
-}
+//List<Solution> bestsolutions = new List<Solution>();
+//foreach (var tours in scenarios)
+//{
+//    bestsolutions.Add(calculateMetrics(tours));
+//}
 
-bestsolutions = bestsolutions.OrderBy(s => s.GrandTotal).ToList();
+//bestsolutions = bestsolutions.OrderBy(s => s.GrandTotal).ToList();
 //bestsolutions.Add(greedy);
 //bestsolutions = bestsolutions.OrderBy(s => s.TotalPenalty).ToList();
-;
+
 //foreach (var sol in bestsolutions.Take(5))
 //{
 //    foreach(var tour in sol.Tours)
@@ -341,9 +347,50 @@ List<Location>  createGreedyGTR(Instance instance)
     return initialRoute;
 }
 
+//var x = bestsolutions[0];
+//calculateMetrics(x.Tours);
 
+Solution TabuSearch(Instance instance, int iterations, int tabuSize )
+{
+    Solution bestSolution = calculateMetrics(generateGreedySolution(instance).Tours);
+    Solution greedySolution = new Solution(bestSolution.Tours, bestSolution.TotalPenalty, bestSolution.TotalDrivingCost, bestSolution.TotalAfterHoursCost, bestSolution.TotalCrewUsageCost, bestSolution.GrandTotal);
+    Solution currentSolution = bestSolution;
+    Queue<Solution> TabuList = new Queue<Solution>();
+    int notImprovingIterations = 0;
+    for (int i = 0; i < iterations; i++)
+    {
+        Solution bestNeighbor = null;
+        var neighborhood = generateNeighbors(currentSolution.Tours, instance);
+        foreach (var neighbor in neighborhood.Take(tabuSize * 10))
+        {
+            bool isTabu = TabuList.Any(tabuSolution => tabuSolution.Equals(neighbor));
+            if (isTabu && neighbor.GrandTotal > bestSolution.GrandTotal) continue;
+            if(bestNeighbor == null || neighbor.GrandTotal <  bestNeighbor.GrandTotal)
+            {
+                bestNeighbor = neighbor;
+            }
+        }
+        if (bestNeighbor == null) break;
+        currentSolution = bestNeighbor;
+        if(bestNeighbor.GrandTotal < bestSolution.GrandTotal)
+        {
+            bestSolution = bestNeighbor;
+            notImprovingIterations = 0;
+        }
+        else
+        {
+            notImprovingIterations++;
+        }
+        TabuList.Enqueue(currentSolution);
+        if (TabuList.Count > tabuSize)
+            TabuList.Dequeue();
+    }
+    return bestSolution;
+}
 
-
+var bestSolution = TabuSearch(instance, 10, 10);
+calculateMetrics(bestSolution.Tours);
+;
 /*
 0 Depot(40, 50) Demand: 0.0 TW: [0, 1236]
 5 Customer(42, 65) Demand: 10.0 TW: [15, 67]
