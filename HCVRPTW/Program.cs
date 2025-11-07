@@ -2,7 +2,7 @@
 using System.Diagnostics;
 
 var filePath = "pliki//CTEST.txt";
-//filePath = "pliki//100 lokacji//C101.txt";
+filePath = "pliki//100 lokacji//C101.txt";
 Instance instance = new Instance(filePath);
 
 
@@ -147,7 +147,7 @@ Solution calculateMetrics(List<Tour> tours)
             prevLocation = loc;
         }
         crew.computeAfterHours();
-        double sum = penalty + drivingCost + crew.afterHoursWorkTime * crew.afterHoursCost+100;//100 - cost of using the crew
+        double sum = penalty + drivingCost + crew.afterHoursWorkTime * crew.afterHoursCost+crew.baseCost;//100 - cost of using the crew
         totalPenalty += penalty;
         totalDrivingCost += drivingCost;
         totalAfterHoursCost += crew.afterHoursWorkTime * crew.afterHoursCost;
@@ -157,65 +157,6 @@ Solution calculateMetrics(List<Tour> tours)
     return new Solution(tours,totalPenalty,totalDrivingCost,totalAfterHoursCost,totalCrewUsageCost,grandTotal);
     
 }
-
-//var scenarios = generateNeighbors(allLocations, instance);
-
-//List<Solution> bestsolutions = new List<Solution>();
-//foreach (var tours in scenarios)
-//{
-//   bestsolutions.Add(calculateMetrics(tours));
-//}
-
-//bestsolutions = bestsolutions.OrderBy(s => s.TotalPenalty).ToList();
-//foreach (var sol in bestsolutions.Take(5))
-//{
-//    foreach(var tour in sol.Tours)
-//    {
-//        foreach (var loc in tour.Locations)
-//        {
-//            Console.Write(loc.Id + " ");
-//        }
-//        Console.WriteLine();
-//    }
-//    Console.WriteLine("Total Penalty: " + sol.TotalPenalty);
-//    Console.WriteLine("Total Driving Cost: " + sol.TotalDrivingCost);
-//    Console.WriteLine("Total After Hours Cost: " + sol.TotalAfterHoursCost);
-//    Console.WriteLine("Total Crew Usage Cost: " + sol.TotalCrewUsageCost);
-//    Console.WriteLine("Grand Total: " + sol.GrandTotal);
-//    Console.WriteLine();
-//}
-
-Solution greedy = generateGreedySolution(instance);
-greedy  = calculateMetrics(greedy.Tours);
-var scenarios = generateNeighbors(greedy.Tours, instance);
-
-//List<Solution> bestsolutions = new List<Solution>();
-//foreach (var tours in scenarios)
-//{
-//    bestsolutions.Add(calculateMetrics(tours));
-//}
-
-//bestsolutions = bestsolutions.OrderBy(s => s.GrandTotal).ToList();
-//bestsolutions.Add(greedy);
-//bestsolutions = bestsolutions.OrderBy(s => s.TotalPenalty).ToList();
-
-//foreach (var sol in bestsolutions.Take(5))
-//{
-//    foreach(var tour in sol.Tours)
-//    {
-//        foreach (var loc in tour.Locations)
-//        {
-//            Console.Write(loc.Id + " ");
-//        }
-//        Console.WriteLine();
-//    }
-//    Console.WriteLine("Total Penalty: " + sol.TotalPenalty);
-//    Console.WriteLine("Total Driving Cost: " + sol.TotalDrivingCost);
-//    Console.WriteLine("Total After Hours Cost: " + sol.TotalAfterHoursCost);
-//    Console.WriteLine("Total Crew Usage Cost: " + sol.TotalCrewUsageCost);
-//    Console.WriteLine("Grand Total: " + sol.GrandTotal);
-//    Console.WriteLine();
-//}
 
 Solution generateGreedySolution(Instance instance) //wprowadzic czekanie jezeli sie oplaca
 {
@@ -355,10 +296,12 @@ Solution TabuSearch(Instance instance, int iterations, int tabuSize )
     Solution bestSolution = calculateMetrics(generateGreedySolution(instance).Tours);
     Solution greedySolution = new Solution(bestSolution.Tours, bestSolution.TotalPenalty, bestSolution.TotalDrivingCost, bestSolution.TotalAfterHoursCost, bestSolution.TotalCrewUsageCost, bestSolution.GrandTotal);
     Solution currentSolution = bestSolution;
+    Console.WriteLine("G: "+ greedySolution.GrandTotal);
     Queue<Solution> TabuList = new Queue<Solution>();
     int notImprovingIterations = 0;
     for (int i = 0; i < iterations; i++)
     {
+        Console.Write(i+". ");
         Solution bestNeighbor = null;
         var neighborhood = generateNeighbors(currentSolution.Tours, instance);
         foreach (var neighbor in neighborhood.Take(tabuSize * 10))
@@ -374,6 +317,7 @@ Solution TabuSearch(Instance instance, int iterations, int tabuSize )
         currentSolution = bestNeighbor;
         if(bestNeighbor.GrandTotal < bestSolution.GrandTotal)
         {
+            Console.WriteLine(bestNeighbor.GrandTotal);
             bestSolution = bestNeighbor;
             notImprovingIterations = 0;
         }
