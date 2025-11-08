@@ -19,17 +19,17 @@ namespace HCVRPTW
         public double afterHoursCost { get; set; }
         public double serviceTimeMultiplier { get; set; } = 1.0;
         public double baseCost { get; set; } = 100;
-        public Crew(int id, int shift/*first or second*/, CrewType crewType)
+        public Crew(int id, int shift/*first or second*/, CrewType crewType, int endOfWork)
         {
             this.Id = id;
 
             if (shift == 0)
             {
-                this.WorkingTimeWindow = (0, 1236 / 2);
+                this.WorkingTimeWindow = (0, endOfWork / 2);
             }
             else
             {
-                this.WorkingTimeWindow = (1236 / 2, 1236);
+                this.WorkingTimeWindow = (endOfWork / 2, endOfWork);
             }
             if (crewType == CrewType.Seniors)
             {

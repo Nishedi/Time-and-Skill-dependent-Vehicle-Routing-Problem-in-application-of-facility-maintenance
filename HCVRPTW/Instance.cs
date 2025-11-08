@@ -18,10 +18,12 @@ namespace HCVRPTW
         public int toEarlyPenaltyMultiplier = 1;
         public int toLatePenaltyMultiplier = 1;
         public int vehicleCapacity = 90;
+        public int endOfWork = 0;
         public Instance(string filename, double seniorsToJuniorsRatio = 0.5, int toEarlyPenaltyMultiplier = 1, int toLatePenaltyMultiplier = 1, int numberOfCrews = 50, int vehicleCapacity = 90)
         {
             FileName = filename;
             ParseSolomonFile(filename);
+            endOfWork = Locations[0].TimeWindow.End;
             this.seniorsToJuniorsRatio = seniorsToJuniorsRatio;
             this.toLatePenaltyMultiplier = toLatePenaltyMultiplier;
             this.numberOfCrews = numberOfCrews;
@@ -29,11 +31,11 @@ namespace HCVRPTW
             this.vehicleCapacity = vehicleCapacity;
             for(int i = 0; i < numberOfCrews * seniorsToJuniorsRatio; i++)
             {
-                Crews.Add(new Crew(i, i % 2, CrewType.Seniors));
+                Crews.Add(new Crew(i, i % 2, CrewType.Seniors,endOfWork));
             }
             for (int i = 0; i < numberOfCrews * (1 - seniorsToJuniorsRatio); i++)
             {
-                Crews.Add(new Crew(i + (int)(numberOfCrews * seniorsToJuniorsRatio), i % 2, CrewType.Juniors));
+                Crews.Add(new Crew(i + (int)(numberOfCrews * seniorsToJuniorsRatio), i % 2, CrewType.Juniors, endOfWork));
             }
             var rnd = new Random(1); 
             Crews = Crews.OrderBy(_ => rnd.Next()).ToList();
