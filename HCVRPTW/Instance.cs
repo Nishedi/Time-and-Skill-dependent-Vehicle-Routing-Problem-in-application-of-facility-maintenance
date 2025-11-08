@@ -15,12 +15,18 @@ namespace HCVRPTW
         public string FileName;
         public double seniorsToJuniorsRatio = 0.5;                       // ratio of seniors to juniors in the crew pool
         public int numberOfCrews = 50;                                  //for now, to CHANGE!!!!
-
-        public Instance(string filename)
+        public int toEarlyPenaltyMultiplier = 1;
+        public int toLatePenaltyMultiplier = 1;
+        public int vehicleCapacity = 90;
+        public Instance(string filename, double seniorsToJuniorsRatio = 0.5, int toEarlyPenaltyMultiplier = 1, int toLatePenaltyMultiplier = 1, int numberOfCrews = 50, int vehicleCapacity = 90)
         {
             FileName = filename;
             ParseSolomonFile(filename);
-
+            this.seniorsToJuniorsRatio = seniorsToJuniorsRatio;
+            this.toLatePenaltyMultiplier = toLatePenaltyMultiplier;
+            this.numberOfCrews = numberOfCrews;
+            this.toLatePenaltyMultiplier = toLatePenaltyMultiplier;
+            this.vehicleCapacity = vehicleCapacity;
             for(int i = 0; i < numberOfCrews * seniorsToJuniorsRatio; i++)
             {
                 Crews.Add(new Crew(i, i % 2, CrewType.Seniors));

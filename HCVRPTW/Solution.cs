@@ -44,7 +44,9 @@ namespace HCVRPTW
         {
             if (obj == null || GetType() != obj.GetType()) return false;
             Solution other = (Solution)obj;
-            if(other.move.i!=this.move.i) return false;
+
+            if (other.GrandTotal == this.GrandTotal) return true;
+            if (other.move.i!=this.move.i) return false;
             if(other.move.j!=this.move.j) return false;
             return true;
         }
