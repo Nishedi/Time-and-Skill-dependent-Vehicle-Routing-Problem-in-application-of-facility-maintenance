@@ -125,7 +125,7 @@ namespace HCVRPTW
                 if (TabuList.Count > tabuSize)
                     TabuList.Dequeue();
             }
-            Console.WriteLine(bestSolution.GrandTotal + " "+(1-bestSolution.GrandTotal/greedySolution.GrandTotal));
+            Console.WriteLine(" "+bestSolution.GrandTotal + " "+(1-bestSolution.GrandTotal/greedySolution.GrandTotal));
             return bestSolution;
         }
 
