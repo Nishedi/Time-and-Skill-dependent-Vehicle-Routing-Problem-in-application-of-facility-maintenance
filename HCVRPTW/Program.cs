@@ -12,8 +12,8 @@ foreach (string filePath1 in filePaths)
     Instance instance = new Instance(filePath1, vehicleCapacity: 90);
 
 
-    var bestSolution = TabuSearch.RunTabuSearch(instance, 10, 10);
-    Utils.calculateMetrics(bestSolution.Tours, instance);
+    var bestSolution = TabuSearch.RunTabuSearch(instance, 5, 10);
+    Utils.calculateMetricsv2(bestSolution, instance);
     Console.WriteLine("----------------------");
 }
 

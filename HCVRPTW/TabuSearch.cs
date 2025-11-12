@@ -8,19 +8,9 @@ namespace HCVRPTW
 {
     internal class TabuSearch
     {
-        public static List<Solution> generateNeighbors(List<Tour> t, Instance instance)
+        public static List<Solutionv2> generateNeighborsv2(List<Location> allLocations, List<Crew> crews, Instance instance)
         {
-            List<Location> allLocations = t.SelectMany(t => t.Locations).ToList();
-            for (int rep = 0; rep < allLocations.Count - 1; rep++)
-            {
-                if (allLocations[rep].Id == 0 && allLocations[rep + 1].Id == 0)
-                {
-                    allLocations.RemoveAt(rep);
-                }
-
-
-            }
-            var scenarios = new List<Solution>();
+            var scenarios = new List<Solutionv2>();
             for (int i = 1; i < allLocations.Count - 1; i++)
             {
                 for (int j = 1; j < i; j++)
@@ -32,35 +22,13 @@ namespace HCVRPTW
                     var toSwap = copy[i];
                     copy[i] = copy[j];
                     copy[j] = toSwap;
-                    var locations = new List<Location>();
-                    var toursNoCrew = new List<Tour>();
-                    foreach (var loc in copy)
-                    {
-                        if (loc.Id != 0)
-                        {
-                            locations.Add(loc);
-                        }
-                        else
-                        {
-                            locations.Add(loc);
-                            if (locations.Count > 2)
-                            {
-                                toursNoCrew.Add(new Tour(null, new List<Location>(locations)));
-                                locations.Clear();
-                                locations.Add(loc);
-                            }
-                        }
-                    }
-                    var tours = new List<Tour>();
                     var crewsCopy = new List<Crew>(instance.Crews);
-                    foreach (var route in toursNoCrew)
-                    {
-                        tours.Add(new Tour(crewsCopy[toursNoCrew.IndexOf(route)], route.Locations));
-                    }
-                    var solution = Utils.calculateMetrics(tours,instance);
+
+                    var solution = Utils.calculateMetricsv2(new Solutionv2(copy,crewsCopy), instance);
                     solution.move = (i, j);
                     scenarios.Add(solution);
-                    for (int k = 0; k < Math.Min(toursNoCrew.Count, crewsCopy.Count); k++)
+                    var depotNumber = allLocations.Count(loc => loc.Id == 0);
+                    for (int k = 0; k < Math.Min(Math.Max(depotNumber*1.1,depotNumber+5), crewsCopy.Count); k++)
                     {
 
                         for (int l = 0; l < k; l++)
@@ -70,13 +38,7 @@ namespace HCVRPTW
                             var crewToSwap = crewsCopy[k];
                             crewsCopy[k] = crewsCopy[l];
                             crewsCopy[l] = crewToSwap;
-
-                            tours = new List<Tour>();
-                            foreach (var route in toursNoCrew)
-                            {
-                                tours.Add(new Tour(crewsCopy[toursNoCrew.IndexOf(route)], route.Locations));
-                            }
-                            solution = Utils.calculateMetrics(tours,instance);
+                            solution = Utils.calculateMetricsv2(new Solutionv2(copy, crewsCopy), instance);
                             solution.move = (i, j);
                             scenarios.Add(solution);
                         }
@@ -88,48 +50,23 @@ namespace HCVRPTW
             return scenarios.OrderBy(s => s.GrandTotal).ToList();
         }
 
-        public static Solution RunTabuSearch(Instance instance, int iterations, int tabuSize)
+        public static Solutionv2 RunTabuSearch(Instance instance, int iterations, int tabuSize)
         {
-            Solutionv2 test = Utils.calculateMetricsv2(Utils.generateGreedySolutionv2(instance), instance);
-            Solution bestSolution = Utils.calculateMetrics(Utils.generateGreedySolution(instance).Tours, instance);
-            if (Math.Round(test.TotalPenalty,2) != Math.Round(bestSolution.TotalPenalty,2))
-            {
-                Console.WriteLine("ERROR in TS initial solution Total Penalty");
-                Console.WriteLine(test.TotalPenalty + " " + bestSolution.TotalPenalty);
-            }
-            if(Math.Round(test.TotalDrivingCost, 2) != Math.Round(bestSolution.TotalDrivingCost,2))
-            {
-                Console.WriteLine("ERROR in TS initial solution TotalDrivingCost");
-                Console.WriteLine(test.TotalDrivingCost + " " + Math.Round(bestSolution.TotalDrivingCost, 2));
-            }
-            if (Math.Round(test.TotalAfterHoursCost, 2) != Math.Round(bestSolution.TotalAfterHoursCost,2))
-            {
-                Console.WriteLine("ERROR in TS initial solution TOtal after hours");
-                Console.WriteLine(test.TotalAfterHoursCost + " " + Math.Round(bestSolution.TotalAfterHoursCost, 2));
-            }
-            if (Math.Round(test.TotalCrewUsageCost, 2) != Math.Round(bestSolution.TotalCrewUsageCost,2))
-            {
-                Console.WriteLine("ERROR in TS initial solution total crew usage");
-                Console.WriteLine(test.TotalCrewUsageCost + " " + bestSolution.TotalCrewUsageCost);
-            }
-            if (Math.Round(test.GrandTotal,2) != Math.Round(bestSolution.GrandTotal,2))
-            {
-                Console.WriteLine("ERROR in TS initial solution grand total");
-                Console.WriteLine(test.GrandTotal + " " + bestSolution.GrandTotal);
-            }
-            return bestSolution;
+            
+            //Solution bestSolution = Utils.calculateMetrics(Utils.generateGreedySolution(instance).Tours, instance);
+            Solutionv2 bestSolution = Utils.calculateMetricsv2(Utils.generateGreedySolutionv2(instance), instance);
 
 
-            Solution greedySolution = new Solution(bestSolution.Tours, bestSolution.TotalPenalty, bestSolution.TotalDrivingCost, bestSolution.TotalAfterHoursCost, bestSolution.TotalCrewUsageCost, bestSolution.GrandTotal);
-            Solution currentSolution = bestSolution;
+            Solutionv2 greedySolution = new Solutionv2(bestSolution.GTR, bestSolution.Crews, bestSolution.TotalPenalty, bestSolution.TotalDrivingCost, bestSolution.TotalAfterHoursCost, bestSolution.TotalCrewUsageCost, bestSolution.GrandTotal);
+            Solutionv2 currentSolution = bestSolution;
             Console.Write("G: " + greedySolution.GrandTotal+" ");
-            Queue<Solution> TabuList = new Queue<Solution>();
+            Queue<Solutionv2> TabuList = new Queue<Solutionv2>();
             int notImprovingIterations = 0;
             for (int i = 0; i < iterations; i++)
             {
                 Console.Write(".");
-                Solution bestNeighbor = null;
-                var neighborhood = generateNeighbors(currentSolution.Tours, instance);
+                Solutionv2 bestNeighbor = null;
+                var neighborhood = generateNeighborsv2(currentSolution.GTR, currentSolution.Crews, instance);
                 foreach (var neighbor in neighborhood.Take(tabuSize * 10))
                 {
                     bool isTabu = TabuList.Any(tabuSolution => tabuSolution.Equals(neighbor));
