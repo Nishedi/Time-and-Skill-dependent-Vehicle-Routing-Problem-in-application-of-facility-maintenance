@@ -90,7 +90,36 @@ namespace HCVRPTW
 
         public static Solution RunTabuSearch(Instance instance, int iterations, int tabuSize)
         {
+            Solutionv2 test = Utils.calculateMetricsv2(Utils.generateGreedySolutionv2(instance), instance);
             Solution bestSolution = Utils.calculateMetrics(Utils.generateGreedySolution(instance).Tours, instance);
+            if (Math.Round(test.TotalPenalty,2) != Math.Round(bestSolution.TotalPenalty,2))
+            {
+                Console.WriteLine("ERROR in TS initial solution Total Penalty");
+                Console.WriteLine(test.TotalPenalty + " " + bestSolution.TotalPenalty);
+            }
+            if(Math.Round(test.TotalDrivingCost, 2) != Math.Round(bestSolution.TotalDrivingCost,2))
+            {
+                Console.WriteLine("ERROR in TS initial solution TotalDrivingCost");
+                Console.WriteLine(test.TotalDrivingCost + " " + Math.Round(bestSolution.TotalDrivingCost, 2));
+            }
+            if (Math.Round(test.TotalAfterHoursCost, 2) != Math.Round(bestSolution.TotalAfterHoursCost,2))
+            {
+                Console.WriteLine("ERROR in TS initial solution TOtal after hours");
+                Console.WriteLine(test.TotalAfterHoursCost + " " + Math.Round(bestSolution.TotalAfterHoursCost, 2));
+            }
+            if (Math.Round(test.TotalCrewUsageCost, 2) != Math.Round(bestSolution.TotalCrewUsageCost,2))
+            {
+                Console.WriteLine("ERROR in TS initial solution total crew usage");
+                Console.WriteLine(test.TotalCrewUsageCost + " " + bestSolution.TotalCrewUsageCost);
+            }
+            if (Math.Round(test.GrandTotal,2) != Math.Round(bestSolution.GrandTotal,2))
+            {
+                Console.WriteLine("ERROR in TS initial solution grand total");
+                Console.WriteLine(test.GrandTotal + " " + bestSolution.GrandTotal);
+            }
+            return bestSolution;
+
+
             Solution greedySolution = new Solution(bestSolution.Tours, bestSolution.TotalPenalty, bestSolution.TotalDrivingCost, bestSolution.TotalAfterHoursCost, bestSolution.TotalCrewUsageCost, bestSolution.GrandTotal);
             Solution currentSolution = bestSolution;
             Console.Write("G: " + greedySolution.GrandTotal+" ");

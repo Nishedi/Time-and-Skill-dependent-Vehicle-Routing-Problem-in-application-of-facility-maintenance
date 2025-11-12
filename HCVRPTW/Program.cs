@@ -1,11 +1,12 @@
 ﻿using HCVRPTW;
 using System.Diagnostics;
 
-var filePath = "pliki//CTEST.txt";
+//var filePath = "pliki//CTEST.txt";
 string[] filePaths = new string[] { "pliki//100 lokacji//C101.txt", "pliki//100 lokacji//C201.txt", "pliki//100 lokacji//R101.txt", "pliki//100 lokacji//R201.txt",
 "pliki//100 lokacji//RC101.txt", "pliki//100 lokacji//RC201.txt"};
 //filePath = "pliki//100 lokacji//C101.txt";
-foreach(string filePath1 in filePaths)
+//string[] filePaths = new string [] {filePath};
+foreach (string filePath1 in filePaths)
 {
     Console.WriteLine(filePath1);
     Instance instance = new Instance(filePath1, vehicleCapacity: 90);
