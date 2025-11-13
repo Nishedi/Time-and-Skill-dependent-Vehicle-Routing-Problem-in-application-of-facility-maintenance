@@ -25,6 +25,7 @@ Instance instance = new Instance(filePath, vehicleCapacity: 90);
 
 GurobiVRP gurobi = new GurobiVRP();
 var gurobiResult = gurobi.gurobi_test(instance);
+Console.WriteLine("Gurobi Result: " + gurobiResult.Item1);
 var bestSolution = TabuSearch.RunTabuSearch(instance, 5, 10);
 /*
 0 Depot(40, 50) Demand: 0.0 TW: [0, 1236]

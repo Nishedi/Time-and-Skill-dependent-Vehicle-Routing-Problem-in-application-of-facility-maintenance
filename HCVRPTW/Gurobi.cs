@@ -64,7 +64,7 @@ public class GurobiVRP
         // Create a new model
         GRBModel model = new GRBModel(env);
         // Set time limit
-        double minutes = 10;
+        double minutes = 1;
         model.Set(GRB.DoubleParam.TimeLimit, minutes * 60);
         int locationsNumber = problem.Locations.Count;
         GRBVar[,,] x = new GRBVar[locationsNumber, locationsNumber, problem.numberOfCrews];
@@ -80,7 +80,7 @@ public class GurobiVRP
         // Create variable x[i, j, v]
         for (int i = 0; i < locationsNumber; i++)
         {
-            for (int j = 0; i < locationsNumber; j++)
+            for (int j = 0; j < locationsNumber; j++)
             {
                 for (int v = 0; v < problem.numberOfCrews; v++)
                 {
@@ -165,8 +165,8 @@ public class GurobiVRP
 
             for (int v = 0; v < problem.numberOfCrews; v++)
             {
-                expr += problem.toEarlyPenaltyMultiplier * penB[v, i];
-                expr += problem.toLatePenaltyMultiplier * penD[v, i];
+                expr += problem.toEarlyPenaltyMultiplier * penB[i, v];
+                expr += problem.toLatePenaltyMultiplier * penD[i, v];
             }
 
         }
@@ -194,7 +194,7 @@ public class GurobiVRP
                 sum += y[i, v] * problem.Locations[i].ServiceTime;
                 sum += problem.toEarlyPenaltyMultiplier * penB[i, v];
                 sum += problem.toLatePenaltyMultiplier * penD[i, v];
-                sum += wait[v, i];
+                sum += wait[i, v];
             }
             // Checking if the time is less than the vehicle working time. Vehicle 0 is take, because fleet is homogeneous
             model.AddConstr(h[v], GRB.EQUAL, sum, "c2");
@@ -367,8 +367,8 @@ public class GurobiVRP
 
         // Print model variables - to comment for experiments
         GRBVar[] vars = model.GetVars();
-        /*foreach (var v in vars)
-            Console.WriteLine(v.VarName + " = " + v.X);*/
+        //foreach (var v in vars)
+        //    Console.WriteLine(v.VarName + " = " + v.X);
 
         // Goal function value and operation time in seconds
         double fCelu = model.ObjVal;
