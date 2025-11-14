@@ -19,7 +19,7 @@ namespace HCVRPTW
         public int toLatePenaltyMultiplier = 1;
         public int vehicleCapacity = 90;
         public int endOfWork = 0;
-        public Instance(string filename, double seniorsToJuniorsRatio = 0.5, int toEarlyPenaltyMultiplier = 1, int toLatePenaltyMultiplier = 1, int numberOfCrews = 50, int vehicleCapacity = 90)
+        public Instance(string filename, double seniorsToJuniorsRatio = 0.5, int toEarlyPenaltyMultiplier = 1, int toLatePenaltyMultiplier = 1, int numberOfCrews = 4, int vehicleCapacity = 90)
         {
             FileName = filename;
             ParseSolomonFile(filename);
@@ -81,7 +81,7 @@ namespace HCVRPTW
                     double deltaX = Locations[j].X - Locations[i].X;
                     double deltaY = Locations[j].Y - Locations[i].Y;
                     double distance = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
-                    distanceMatrix[i, j] = distance;
+                    distanceMatrix[i, j] = (int)distance; // dodana konwersja na inta
                 }
             }
             return distanceMatrix;

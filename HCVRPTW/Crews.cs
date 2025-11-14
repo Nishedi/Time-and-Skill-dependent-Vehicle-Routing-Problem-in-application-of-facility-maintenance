@@ -9,7 +9,7 @@ namespace HCVRPTW
 {
     public class Crew
     {
-        public double Capacity; // vehicle load limit
+        public double Capacity; // vehicle load limit - not needed????
         public int Id;
         public CrewType Type;
         public (double startTime, double endTime) WorkingTimeWindow; // (e_v, l_v) - working time window of crew
@@ -39,7 +39,7 @@ namespace HCVRPTW
             else
             {
                 afterHoursCost = 1;
-                serviceTimeMultiplier = 1.5;
+                serviceTimeMultiplier = 2; // changed multiplier for test purposes - previous 1.5
                 baseCost = 100;
             }
             Type = crewType;
