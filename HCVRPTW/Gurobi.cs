@@ -46,6 +46,7 @@ public class GurobiVRP
         }
     }
 
+    // Subset printer for testing purposes
     public void printSubSets()
     {
         foreach (var subSet in subSets)
@@ -60,21 +61,23 @@ public class GurobiVRP
     public Tuple<double, double> gurobi_test(Instance problem)
     {
         // Generate all possible combinations
-        //GetCombination(problem.Customers); ODKOMENTOWAC
+        GetCombination(problem.Locations);
         // Create a new model
         GRBModel model = new GRBModel(env);
         // Set time limit
         double minutes = 1;
         model.Set(GRB.DoubleParam.TimeLimit, minutes * 60);
+        // Definition of variables
         int locationsNumber = problem.Locations.Count;
         GRBVar[,,] x = new GRBVar[locationsNumber, locationsNumber, problem.numberOfCrews];
         GRBVar[,] y = new GRBVar[locationsNumber, problem.numberOfCrews];
         GRBVar[,] t = new GRBVar[locationsNumber, problem.numberOfCrews];
-        GRBVar[,] penB = new GRBVar[locationsNumber, problem.numberOfCrews];
-        GRBVar[,] penD = new GRBVar[locationsNumber, problem.numberOfCrews];
+        GRBVar[,] p = new GRBVar[locationsNumber, problem.numberOfCrews];
+        GRBVar[,] q = new GRBVar[locationsNumber, problem.numberOfCrews];
         GRBVar[,] wait = new GRBVar[locationsNumber, problem.numberOfCrews];
         GRBVar[] h = new GRBVar[problem.numberOfCrews];
         GRBVar[] a = new GRBVar[problem.numberOfCrews];
+        Console.WriteLine(problem.Locations[0].ServiceTime);
 
         // Create variable x[i, j, v]
         for (int i = 0; i < locationsNumber; i++)
@@ -99,59 +102,57 @@ public class GurobiVRP
         }
 
         // Create variable t[v, i]
+        // Limited by working hours of given crew
         for (int i = 0; i < locationsNumber; i++)
         {
             for (int v = 0; v < problem.numberOfCrews; v++)
             {
-                //t[v, i] = model.AddVar(0.0, 10000.0, 0.0, GRB.INTEGER, "t_" + v + "_" + i);
                 t[i, v] = model.AddVar(problem.Crews[v].WorkingTimeWindow.startTime, problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "t_" + i + "_" + v);
             }
         }
 
-        // Create variable penB[v, i] - penalty for arrival before time window (penalty)
-        // Limited by service time
+        // Create variable p[v, i] - penalty for arrival before time window (penalty)
+        // Limited by total service time
         for (int i = 0; i < locationsNumber; i++)
         {
             for (int v = 0; v < problem.numberOfCrews; v++)
             {
-                //penB[v, i] = model.AddVar(0.0, 10000.0, 0.0, GRB.INTEGER, "penB_" + v + "_" + i);
-                penB[i, v] = model.AddVar(0.0, problem.Locations[i].ServiceTime, 0.0, GRB.INTEGER, "penB_" + i + "_" + v);
+                p[i, v] = model.AddVar(0.0, problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "p_" + i + "_" + v);
 
             }
         }
 
-        // Create variable penD[v, i] - penalty for arrival after time window (penalty)
-        // Limited by service time
+        // Create variable q[v, i] - penalty for arrival after time window (penalty)
+        // Limited by total service time
         for (int i = 0; i < locationsNumber; i++)
         {
             for (int v = 0; v < problem.numberOfCrews; v++)
             {
-                //penD[v, i] = model.AddVar(0.0, 10000.0, 0.0, GRB.INTEGER, "penD_" + v + "_" + i);
-                penD[i, v] = model.AddVar(0.0, problem.Locations[i].ServiceTime, 0.0, GRB.INTEGER, "penD_" + i + "_" + v);
+                q[i, v] = model.AddVar(0.0, problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "q_" + i + "_" + v);
             }
         }
 
-        // Create variable wait[v, i] - wyjazd po czasie
+        // Create variable wait[v, i] - a time spent before location to avoid penalty
         for (int i = 0; i < locationsNumber; i++)
         {
             for (int v = 0; v < problem.numberOfCrews; v++)
             {
-                wait[i, v] = model.AddVar(0.0, 10000.0, 0.0, GRB.INTEGER, "wait_" + i + "_" + v);
+                wait[i, v] = model.AddVar(0.0, 0.0, 0.0, GRB.INTEGER, "wait_" + i + "_" + v);
             }
         }
 
-        // Create variable h[v] - czas pracy
+        // Create variable h[v] - working hours for each crew
 
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
-            h[v] = model.AddVar(0.0, 10000.0, 0.0, GRB.INTEGER, "h_" + v);
+            h[v] = model.AddVar(0.0, problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "h_" + v);
         }
 
-        // Create variable a[v] - nadgodziny
+        // Create variable a[v] - overhours for each crew
 
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
-            a[v] = model.AddVar(0.0, 10000.0, 0.0, GRB.INTEGER, "a_" + v);
+            a[v] = model.AddVar(0.0, problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "a_" + v);
         }
 
 
@@ -165,6 +166,7 @@ public class GurobiVRP
             {
                 for (int v = 0; v < problem.numberOfCrews; v++)
                 {
+                    // First factor
                     expr += x[i, j, v] * problem.DistanceMatrix[i, j];
                 }
             }
@@ -176,10 +178,11 @@ public class GurobiVRP
                 // Second factor
                 expr += a[v] * problem.Crews[v].afterHoursCost;
                 // Third factor
-                expr += problem.toEarlyPenaltyMultiplier * penB[i, v];
-                expr += problem.toLatePenaltyMultiplier * penD[i, v];
-                expr += 100000 * wait[i, v]; // Dodane
-                expr += x[i, 0 , v] * problem.Crews[v].baseCost; // Dodane
+                expr += problem.toEarlyPenaltyMultiplier * p[i, v];
+                expr += problem.toLatePenaltyMultiplier * q[i, v];
+                //expr += 100000 * wait[i, v];
+                // Fourth factor
+                expr += x[i, 0 , v] * problem.Crews[v].baseCost; 
             }
             
         }
@@ -188,8 +191,8 @@ public class GurobiVRP
 
 
 
-        // Add constraint 2
-        // Time constraint
+        // Constraint 1
+        // Calculation of working hours h[v] for each crew
         
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
@@ -207,22 +210,25 @@ public class GurobiVRP
             for (int i = 1; i < locationsNumber; i++)
             {
                 sum += y[i, v] * problem.Locations[i].ServiceTime * problem.Crews[v].serviceTimeMultiplier;
+            }
+            for (int i = 0; i < locationsNumber; i++)
+            {
                 sum += wait[i, v];
             }
-            
+
             // Checking if the time is less than the vehicle working time. Vehicle 0 is take, because fleet is homogeneous
             model.AddConstr(h[v], GRB.GREATER_EQUAL, sum, "c2");
         }
 
-        // Add constraint 2
-        // Overhours constraint
+        // Constraint 2
+        // Calculation of overhours a[v] for each crew
 
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
             model.AddConstr(a[v], GRB.EQUAL, h[v] - problem.Crews[v].WorkingTimeWindow.endTime, "c2");
         }
 
-        // Add constraint 
+        // Constraint 3
         // Capacity constraint
         
         for (int v = 0; v < problem.numberOfCrews; v++)
@@ -236,8 +242,8 @@ public class GurobiVRP
         }
         
 
-        // Add constraint 3 
-        // A location must be assigned to exactly one vehicle -> OK
+        // Constraint 4
+        // Assign each location to exactly one vehicle
         for (int i = 1; i < locationsNumber; i++)
         {
             GRBLinExpr sum = 0.0;
@@ -248,8 +254,8 @@ public class GurobiVRP
             model.AddConstr(sum, GRB.EQUAL, 1.0, "c3");
         }
 
-        // Add constraint 4
-        // Setting x variables depending on y variables -> OK
+        // Constraint 5
+        // Set decision variable y[v, i] based on x[i, j, v] (if an edge is pointing to location)
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
             for (int i = 1; i < locationsNumber; i++)
@@ -264,8 +270,8 @@ public class GurobiVRP
             }
         }
 
-        // Add constraint 5
-        // Vehicle must start from depot -> OK
+        // Constraint 6
+        // Assure that each used vehicle start from depot
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
             for (int i = 1; i < locationsNumber; i++)
@@ -280,8 +286,8 @@ public class GurobiVRP
 
         }
 
-        // Add constraint 6
-        // A vehicle must leave location only once
+        // Constraint 7
+        // Assure that each vehicle returns to depot
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
             GRBLinExpr sum = 0.0;
@@ -292,7 +298,7 @@ public class GurobiVRP
             model.AddConstr(sum, GRB.LESS_EQUAL, 1.0, "c6");
         }
 
-        // Add constraint 7
+        // Constraint 8
         // A vehicle must not go to the same location
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
@@ -304,7 +310,7 @@ public class GurobiVRP
             model.AddConstr(sum, GRB.EQUAL, 0.0, "c7");
         }
 
-        // Add constraint 8
+        // Constraint 9
         // A vehicle must enter and leave a location
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
@@ -321,7 +327,7 @@ public class GurobiVRP
             }
         }
 
-        // Add constraint 9
+        // Constraint 10
         // No subtour constraint
         
         for (int v = 0; v < problem.numberOfCrews; v++)
@@ -341,7 +347,7 @@ public class GurobiVRP
             }
         }
         
-        // Add constraint 10
+        // Constraint 11
         // Set arrival time variables
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
@@ -356,35 +362,31 @@ public class GurobiVRP
         }
 
 
-        // Add constraint 11
-        // Calculation of b variable and its penatly penB
+        // Constraint 12
+        // Calculation of penalty p variable, that counts too early arrival time
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
             for (int i = 1; i < locationsNumber; i++)
             {
                 GRBLinExpr sum = problem.Locations[i].TimeWindow.Start - t[i, v] - 10000 * (1 - y[i, v]);
-                //model.AddConstr(b[v, i], GRB.GREATER_EQUAL, sum, "c16");
-                //model.AddGenConstrMin(penB[v, i], new GRBVar[] {b[v, i]}, problem.Customers[i].ServiceTime, "c17");
-                model.AddConstr(penB[i, v], GRB.GREATER_EQUAL, sum, "c11");
+                model.AddConstr(p[i, v], GRB.GREATER_EQUAL, sum, "c11");
 
             }
         }
 
-        // Add constraint 12
-        // Calculation of d variable and its penatly penD
+        // Constraint 13
+        // Calculation of penalty p variable, that counts too late service finish time
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
             for (int i = 1; i < locationsNumber; i++)
             {
                 GRBLinExpr sum = t[i, v] + (problem.Locations[i].ServiceTime * problem.Crews[v].serviceTimeMultiplier) - problem.Locations[i].TimeWindow.End - (10000 * (1 - y[i, v]));
-                //model.AddConstr(d[v, i], GRB.GREATER_EQUAL, sum, "c18");
-                //model.AddGenConstrMin(penD[v, i], new GRBVar[] {d[v, i]}, problem.Customers[i].ServiceTime, "c19");
-                model.AddConstr(penD[i, v], GRB.GREATER_EQUAL, sum, "c12");
+                model.AddConstr(q[i, v], GRB.GREATER_EQUAL, sum, "c12");
             }
         }
 
-        // Add constraint 13
-        // Calculation of d variable and its penatly penD
+        // Constraint 14
+        // Calculation of waiting time before services, that may be done by vehicle to avoid penalty for early arrival
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
             for (int i = 0; i < locationsNumber; i++)
