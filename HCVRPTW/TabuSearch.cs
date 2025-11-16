@@ -8,7 +8,38 @@ namespace HCVRPTW
 {
     internal class TabuSearch
     {
-        public static List<Solutionv2> generateNeighborsv2(List<Location> allLocations, List<Crew> crews, Instance instance)
+        static List<T> InsertMove<T>(List<T> list, int i, int j)
+        {
+            var copy = list.ToList();
+            var element = copy[i];
+            copy.RemoveAt(i);
+            if (j > i) j--;
+            copy.Insert(j, element);
+            return copy;
+        }
+        static List<T> SwapMove<T>(List<T> list, int i, int j)
+        {
+            var copy = list.ToList();
+            var toSwap = copy[i];
+            copy[i] = copy[j];
+            copy[j] = toSwap;
+            return copy;
+        }
+        static List<T> ReverseMove<T>(List<T> list, int i, int j)
+        {
+            var copy = list.ToList();
+            copy.Reverse(i, j - i + 1);
+            return copy;
+        }
+        static List<T> TwoOptMove<T>(List<T> list, int i, int j)
+        {
+            var copy = list.ToList();
+            // wszystko między i+1 i j odwracamy – dokładnie 2-opt
+            copy.Reverse(i + 1, j - i);
+            return copy;
+        }
+
+        public static List<Solutionv2> generateNeighborsv2(List<Location> allLocations, List<Crew> crews, Instance instance, int moveOperator)
         {
             var scenarios = new List<Solutionv2>();
             for (int i = 1; i < allLocations.Count - 1; i++)
@@ -18,10 +49,12 @@ namespace HCVRPTW
                 //{
                 //    for (int j = i-1; j < i; j++)
                 {
-                    var copy = allLocations.ToList();
-                    var toSwap = copy[i];
-                    copy[i] = copy[j];
-                    copy[j] = toSwap;
+                    List<Location> copy = null;
+                    if (moveOperator == 0) copy = SwapMove(allLocations, i, j);
+                    if (moveOperator == 1) copy = InsertMove(allLocations, i, j);
+                    if (moveOperator == 2) copy = ReverseMove(allLocations, j, i);
+                    if (moveOperator == 3) copy = TwoOptMove(allLocations, j, i);
+
                     var crewsCopy = new List<Crew>(instance.Crews);
 
                     var solution = Utils.calculateMetricsv2(new Solutionv2(copy,crewsCopy), instance);
@@ -50,8 +83,36 @@ namespace HCVRPTW
             return scenarios.OrderBy(s => s.GrandTotal).ToList();
         }
 
-        public static Solutionv2 RunTabuSearch(Instance instance, int iterations, int tabuSize)
+        public static List<Location> RandomShuttle(List<Location> allLocations)
         {
+            var result = new List<Location>();
+            for(int n = 0; n < 10; n++)
+            {
+                for (int i = 1; i < allLocations.Count - 1; i++)
+                {
+                    for (int j = 1; j < i; j++)
+                    {
+                        var rnd = new Random();
+                        if (rnd.NextDouble() < 0.1)
+                        {
+                            var copy = allLocations;
+                            var toSwap = copy[i];
+                            copy[i] = copy[j];
+                            copy[j] = toSwap;
+                            result = copy;
+                        }
+                    }
+                }
+            }
+            
+            
+            
+            return result;
+        }
+
+        public static Solutionv2 RunTabuSearch(Instance instance, int iterations, int tabuSize, int moveOperator)
+        {
+            String[] operators = new String[] {"SwapMove", "InsertMove", "ReverseMove", "TwoOptMove", "BlockSwapMOve", "BlockShiftMove" };
             
             //Solution bestSolution = Utils.calculateMetrics(Utils.generateGreedySolution(instance).Tours, instance);
             Solutionv2 bestSolution = Utils.calculateMetricsv2(Utils.generateGreedySolutionv2(instance), instance);
@@ -59,18 +120,22 @@ namespace HCVRPTW
 
             Solutionv2 greedySolution = new Solutionv2(bestSolution.GTR, bestSolution.Crews, bestSolution.TotalPenalty, bestSolution.TotalDrivingCost, bestSolution.TotalAfterHoursCost, bestSolution.TotalCrewUsageCost, bestSolution.GrandTotal);
             Solutionv2 currentSolution = bestSolution;
-            Console.Write("G: " + greedySolution.GrandTotal+" ");
+            //Console.Write("G: " + greedySolution.GrandTotal+" ");
             Queue<Solutionv2> TabuList = new Queue<Solutionv2>();
             int notImprovingIterations = 0;
+            int notImprovingIterationsv2 = 0;
             for (int i = 0; i < iterations; i++)
             {
-                Console.Write(".");
+                //Console.Write(".");
                 Solutionv2 bestNeighbor = null;
-                var neighborhood = generateNeighborsv2(currentSolution.GTR, currentSolution.Crews, instance);
+                var neighborhood = generateNeighborsv2(currentSolution.GTR, currentSolution.Crews, instance, moveOperator);
                 foreach (var neighbor in neighborhood.Take(tabuSize * 10))
                 {
                     bool isTabu = TabuList.Any(tabuSolution => tabuSolution.Equals(neighbor));
-                    if (isTabu && neighbor.GrandTotal > bestSolution.GrandTotal) continue;
+                    bool aspiration = neighbor.GrandTotal < bestSolution.GrandTotal;
+
+                    //if (isTabu && !aspiration) continue;
+                    if (isTabu && neighbor.GrandTotal >= bestSolution.GrandTotal) continue;
                     if (bestNeighbor == null || neighbor.GrandTotal < bestNeighbor.GrandTotal)
                     {
                         bestNeighbor = neighbor;
@@ -82,16 +147,30 @@ namespace HCVRPTW
                 {
                     bestSolution = bestNeighbor;
                     notImprovingIterations = 0;
+                    //Console.Write(" + ");
+                    notImprovingIterationsv2 = 0;
                 }
                 else
                 {
                     notImprovingIterations++;
+                    notImprovingIterationsv2++;
+                }
+                if (notImprovingIterations >= iterations * 0.01)
+                {
+                    currentSolution.GTR = RandomShuttle(currentSolution.GTR);
+                    //Console.Write(" - ");
+                    notImprovingIterations = 0;
+                }
+                if (notImprovingIterationsv2 >= iterations * 0.1)
+                {
+                    Console.Write(" Break at: " + i);
+                    break;
                 }
                 TabuList.Enqueue(currentSolution);
                 if (TabuList.Count > tabuSize)
                     TabuList.Dequeue();
             }
-            Console.WriteLine(" "+bestSolution.GrandTotal + " "+(1-bestSolution.GrandTotal/greedySolution.GrandTotal));
+            Console.WriteLine(" "+operators[moveOperator]+" "+bestSolution.GrandTotal + " "+(1-bestSolution.GrandTotal/greedySolution.GrandTotal));
             return bestSolution;
         }
 

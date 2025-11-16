@@ -49,7 +49,7 @@ namespace HCVRPTW
             if (obj == null || GetType() != obj.GetType()) return false;
             Solutionv2 other = (Solutionv2)obj;
 
-            if (other.GrandTotal == this.GrandTotal) return true;
+            //if (other.GrandTotal == this.GrandTotal) return true;
             if (other.move.i != this.move.i) return false;
             if (other.move.j != this.move.j) return false;
             return true;

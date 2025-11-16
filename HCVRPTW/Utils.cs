@@ -36,7 +36,7 @@ namespace HCVRPTW
                     totalDrivingCost += dist;
                     currentLoad += loc.Demand;
                 }
-                else if (prevLocation != null)
+                else if (prevLocation != null && prevLocation.Id!=loc.Id)
                 {
                     var dist = instance.DistanceMatrix[prevLocation.Id, loc.Id];
                     crew.WorkTime += dist;
@@ -47,8 +47,12 @@ namespace HCVRPTW
                     totalAfterHoursCost += crew.afterHoursWorkTime * crew.afterHoursCost;
 
                     routeNumber++;
-                    crew = Crews[routeNumber];
-                    crew.WorkTime = crew.WorkingTimeWindow.startTime;
+                    if (routeNumber < Crews.Count)
+                    {
+                        crew = Crews[routeNumber];
+                        crew.WorkTime = crew.WorkingTimeWindow.startTime;
+
+                    }
                     currentLoad = 0.0;
                    
                 }
@@ -87,10 +91,6 @@ namespace HCVRPTW
                 visited[current.Id] = true;      // Oznaczenie bazy jako odwiedzona
                 vehicleTime = Crews[crewNumber].WorkingTimeWindow.startTime;
                 currentLoad = 0.0;
-                if (crewNumber == 3)
-                {
-                    int a = 0;
-                }
                 while (true)
                 {
                     Location nextCustomer = null;
@@ -102,18 +102,23 @@ namespace HCVRPTW
                         {
                             double demand = location.Demand;
                             double distance = distanceMatrix[current.Id, location.Id];                                                                                  // Odległość pomiedzy aktualną lokalizacją a potencjalnie najbliższą
-                            double estimatedUpperTimeLeft = location.TimeWindow.End - (vehicleTime + location.ServiceTime * Crews[crewNumber].serviceTimeMultiplier);   // Kara za spóźnienie
-                            double estimatedLowerTimeLeft = location.TimeWindow.Start - vehicleTime;                                                                    // Kara za zbyt szybki przyjazd
-                            estimatedLowerTimeLeft *= instance.toEarlyPenaltyMultiplier;                                                                                // Współczynnik kary za zbyt wczesny przyjazd
-                            estimatedUpperTimeLeft *= instance.toLatePenaltyMultiplier;                                                                                 // Wpsółczynnik kary za spóźnienie
-                            double estimatedPenalty = Math.Max(0, estimatedUpperTimeLeft);                                                                              // Max bo kary nie są ujemne
-                            estimatedPenalty += Math.Max(0, estimatedLowerTimeLeft);
-                            distance += estimatedPenalty;
+                            //double estimatedUpperTimeLeft = location.TimeWindow.End - (vehicleTime + location.ServiceTime * Crews[crewNumber].serviceTimeMultiplier);   // Kara za spóźnienie
+                            //double estimatedLowerTimeLeft = location.TimeWindow.Start - vehicleTime;                                                                    // Kara za zbyt szybki przyjazd
+                            //estimatedLowerTimeLeft *= instance.toEarlyPenaltyMultiplier;                                                                                // Współczynnik kary za zbyt wczesny przyjazd
+                            //estimatedUpperTimeLeft *= instance.toLatePenaltyMultiplier;                                                                                 // Wpsółczynnik kary za spóźnienie
+                            //double estimatedPenalty = Math.Max(0, estimatedUpperTimeLeft);                                                                              // Max bo kary nie są ujemne
+                            //estimatedPenalty += Math.Max(0, estimatedLowerTimeLeft);
+                            //distance += estimatedPenalty;
+                            var penalty = Math.Max(0, location.TimeWindow.Start - (vehicleTime + distance)) * instance.toEarlyPenaltyMultiplier;
+                            penalty += Math.Max(0, (vehicleTime + distance + location.ServiceTime * Crews[crewNumber].serviceTimeMultiplier) - location.TimeWindow.End) * instance.toLatePenaltyMultiplier;
+                            distance += penalty;
 
                             if (distance < minDistance &&                                                                                                           // Dystans (odległość + suma kar)
                                 location.TimeWindow.Start < Crews[crewNumber].WorkingTimeWindow.endTime &&                                                          // Rozpoczęcie okna czasowego nie może być później niż zakońćzenie pracy ekipy
                                 vehicleTime + location.ServiceTime * Crews[crewNumber].serviceTimeMultiplier < Crews[crewNumber].WorkingTimeWindow.endTime + 100 && // Czas ukończenia serwisu lokalizacji nie może być późniejszy niż zakończenie pracy ekipy ale dopuszczane jest małe spóźnienie (Uwaga Radka)
-                                currentLoad + demand <= instance.vehicleCapacity)
+                                currentLoad + demand <= instance.vehicleCapacity
+                                && location.TimeWindow.Start >= vehicleTime - vehicleTime * 0.2
+                                )
                             {
                                 minDistance = distance; //Aktualizacja "najbliższeg"o sąsiada
                                 nextCustomer = location;
