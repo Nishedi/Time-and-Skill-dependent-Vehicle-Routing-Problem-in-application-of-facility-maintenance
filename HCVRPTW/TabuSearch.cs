@@ -116,6 +116,9 @@ namespace HCVRPTW
             
             //Solution bestSolution = Utils.calculateMetrics(Utils.generateGreedySolution(instance).Tours, instance);
             Solutionv2 bestSolution = Utils.calculateMetricsv2(Utils.generateGreedySolutionv2(instance), instance);
+            List<Solutionv2> Elite = new();
+            Elite.Add(bestSolution);
+            Elite = Elite.OrderBy(s => s.GrandTotal).Take(5).ToList();
 
 
             Solutionv2 greedySolution = new Solutionv2(bestSolution.GTR, bestSolution.Crews, bestSolution.TotalPenalty, bestSolution.TotalDrivingCost, bestSolution.TotalAfterHoursCost, bestSolution.TotalCrewUsageCost, bestSolution.GrandTotal);
@@ -149,6 +152,9 @@ namespace HCVRPTW
                     notImprovingIterations = 0;
                     //Console.Write(" + ");
                     notImprovingIterationsv2 = 0;
+                    Elite.Add(bestNeighbor);
+                    Elite = Elite.OrderBy(s => s.GrandTotal).Take(5).ToList();
+
                 }
                 else
                 {
@@ -157,7 +163,19 @@ namespace HCVRPTW
                 }
                 if (notImprovingIterations >= iterations * 0.01)
                 {
-                    currentSolution.GTR = RandomShuttle(currentSolution.GTR);
+                    var random = new Random();
+                    int x = random.Next(2);
+                    if (x % 2 == 0)
+                    {
+
+                        currentSolution = Elite[random.Next(Elite.Count)];
+
+                    }
+                    else
+                    {
+                        currentSolution.GTR = RandomShuttle(currentSolution.GTR);
+                    }
+                        
                     //Console.Write(" - ");
                     notImprovingIterations = 0;
                 }
@@ -167,7 +185,18 @@ namespace HCVRPTW
                     break;
                 }
                 TabuList.Enqueue(currentSolution);
-                if (TabuList.Count > tabuSize)
+                int dynamicTabu = tabuSize;
+
+                if (notImprovingIterations > 50)
+                {
+                    dynamicTabu = Math.Min(dynamicTabu * 2, 500);
+                }
+                else if (notImprovingIterations == 0)
+                {
+                    dynamicTabu = Math.Max(dynamicTabu / 2, 5);
+                }
+
+                if (TabuList.Count > dynamicTabu)
                     TabuList.Dequeue();
             }
             Console.WriteLine(" "+operators[moveOperator]+" "+bestSolution.GrandTotal + " "+(1-bestSolution.GrandTotal/greedySolution.GrandTotal));
