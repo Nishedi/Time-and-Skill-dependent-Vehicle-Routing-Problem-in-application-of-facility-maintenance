@@ -77,8 +77,8 @@ public class GurobiVRP
         GRBVar[,] wait = new GRBVar[locationsNumber, problem.numberOfCrews];
         GRBVar[] h = new GRBVar[problem.numberOfCrews];
         GRBVar[] a = new GRBVar[problem.numberOfCrews];
-        Console.WriteLine(problem.Locations[0].ServiceTime);
-
+        foreach(var v in problem.Crews)
+            Console.WriteLine("Crew " + v.Id + " start time: " + v.WorkingTimeWindow.startTime);
         // Create variable x[i, j, v]
         for (int i = 0; i < locationsNumber; i++)
         {
@@ -107,7 +107,7 @@ public class GurobiVRP
         {
             for (int v = 0; v < problem.numberOfCrews; v++)
             {
-                t[i, v] = model.AddVar(problem.Crews[v].WorkingTimeWindow.startTime, problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "t_" + i + "_" + v);
+                t[i, v] = model.AddVar(problem.Crews[v].WorkingTimeWindow.startTime, 20000, 0.0, GRB.INTEGER, "t_" + i + "_" + v);
             }
         }
 
@@ -117,7 +117,7 @@ public class GurobiVRP
         {
             for (int v = 0; v < problem.numberOfCrews; v++)
             {
-                p[i, v] = model.AddVar(0.0, problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "p_" + i + "_" + v);
+                p[i, v] = model.AddVar(0.0, 2 * problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "p_" + i + "_" + v);
 
             }
         }
@@ -128,7 +128,7 @@ public class GurobiVRP
         {
             for (int v = 0; v < problem.numberOfCrews; v++)
             {
-                q[i, v] = model.AddVar(0.0, problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "q_" + i + "_" + v);
+                q[i, v] = model.AddVar(0.0, 2 * problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "q_" + i + "_" + v);
             }
         }
 
@@ -145,14 +145,14 @@ public class GurobiVRP
 
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
-            h[v] = model.AddVar(0.0, problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "h_" + v);
+            h[v] = model.AddVar(0.0, 2 * problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "h_" + v);
         }
 
         // Create variable a[v] - overhours for each crew
 
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
-            a[v] = model.AddVar(0.0, problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "a_" + v);
+            a[v] = model.AddVar(0.0, 2 * problem.Locations[0].TimeWindow.End, 0.0, GRB.INTEGER, "a_" + v);
         }
 
 
@@ -173,10 +173,10 @@ public class GurobiVRP
         }
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
+            // Second factor
+            expr += a[v] * problem.Crews[v].afterHoursCost;
             for (int i = 1; i < locationsNumber; i++)
             {
-                // Second factor
-                expr += a[v] * problem.Crews[v].afterHoursCost;
                 // Third factor
                 expr += problem.toEarlyPenaltyMultiplier * p[i, v];
                 expr += problem.toLatePenaltyMultiplier * q[i, v];
@@ -225,7 +225,7 @@ public class GurobiVRP
 
         for (int v = 0; v < problem.numberOfCrews; v++)
         {
-            model.AddConstr(a[v], GRB.EQUAL, h[v] - problem.Crews[v].WorkingTimeWindow.endTime, "c2");
+            model.AddConstr(a[v], GRB.GREATER_EQUAL, h[v] - (problem.Crews[v].WorkingTimeWindow.endTime - problem.Crews[v].WorkingTimeWindow.startTime), "c2");
         }
 
         // Constraint 3

@@ -38,11 +38,11 @@ var filePath = "pliki//CTEST.txt";
 
 Instance instance2 = new Instance(filePath, vehicleCapacity: 90);
 
-//GurobiVRP gurobi = new GurobiVRP();
-//var gurobiResult = gurobi.gurobi_test(instance);
-//Console.WriteLine("Gurobi Result: " + gurobiResult.Item1);
-for (int i = 0; i < 5; i++)
-     TabuSearch.RunTabuSearch(instance2, 100000, 10,i);
+GurobiVRP gurobi = new GurobiVRP();
+var gurobiResult = gurobi.gurobi_test(instance2);
+Console.WriteLine("Gurobi Result: " + gurobiResult.Item1);
+//for (int i = 0; i < 5; i++)
+//     TabuSearch.RunTabuSearch(instance2, 100000, 10,i);
 /*
 0 Depot(40, 50) Demand: 0.0 TW: [0, 1236]
 5 Customer(42, 65) Demand: 10.0 TW: [15, 67]
