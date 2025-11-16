@@ -8,7 +8,7 @@ namespace HCVRPTW
 {
     internal class TabuSearch
     {
-        static List<T> InsertMove<T>(List<T> list, int i, int j)
+        internal static List<T> InsertMove<T>(List<T> list, int i, int j)
         {
             var copy = list.ToList();
             var element = copy[i];
@@ -17,7 +17,7 @@ namespace HCVRPTW
             copy.Insert(j, element);
             return copy;
         }
-        static List<T> SwapMove<T>(List<T> list, int i, int j)
+        internal static List<T> SwapMove<T>(List<T> list, int i, int j)
         {
             var copy = list.ToList();
             var toSwap = copy[i];
@@ -25,13 +25,13 @@ namespace HCVRPTW
             copy[j] = toSwap;
             return copy;
         }
-        static List<T> ReverseMove<T>(List<T> list, int i, int j)
+        internal static List<T> ReverseMove<T>(List<T> list, int i, int j)
         {
             var copy = list.ToList();
             copy.Reverse(i, j - i + 1);
             return copy;
         }
-        static List<T> TwoOptMove<T>(List<T> list, int i, int j)
+        internal static List<T> TwoOptMove<T>(List<T> list, int i, int j)
         {
             var copy = list.ToList();
             // wszystko między i+1 i j odwracamy – dokładnie 2-opt
