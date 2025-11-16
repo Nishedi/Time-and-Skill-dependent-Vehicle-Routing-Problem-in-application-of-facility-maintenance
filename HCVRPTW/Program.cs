@@ -1,7 +1,7 @@
 ﻿using HCVRPTW;
 using System.Diagnostics;
 
-var filePath = "pliki//CTEST.txt";
+//var filePath = "pliki//CTEST.txt";
 //string[] filePaths = new string[] { /*"pliki//100 lokacji//C101.txt",*/ "pliki//100 lokacji//C201.txt", "pliki//100 lokacji//R101.txt", "pliki//100 lokacji//R201.txt",
 //"pliki//100 lokacji//RC101.txt", "pliki//100 lokacji//RC201.txt"};
 ////filePath = "pliki//100 lokacji//C101.txt";
@@ -34,15 +34,18 @@ var filePath = "pliki//CTEST.txt";
 //    Console.WriteLine("----------------------");
 //}
 
-;
-
+var filePath = "pliki//CTEST.txt";
+//var filePath = @"C:\Users\radek\Source\Repos\Time-and-Skill-dependent-Vehicle-Routing-Problem-in-application-of-facility-maintenance\HCVRPTW\pliki\CTEST.txt";
 Instance instance2 = new Instance(filePath, vehicleCapacity: 90);
 
-GurobiVRP gurobi = new GurobiVRP();
-var gurobiResult = gurobi.gurobi_test(instance2);
-Console.WriteLine("Gurobi Result: " + gurobiResult.Item1);
-//for (int i = 0; i < 5; i++)
-//     TabuSearch.RunTabuSearch(instance2, 100000, 10,i);
+//GurobiVRP gurobi = new GurobiVRP();
+//var gurobiResult = gurobi.gurobi_test(instance2);
+//Console.WriteLine("Gurobi Result: " + gurobiResult.Item1);
+for (int i = 0; i < 4; i++)
+{
+    TabuSearch.RunTabuSearch(instance2, 1000, 10, i);
+    ArtificialBeeColony.Run(instance2, 1000, 50, 50, i);
+}
 /*
 0 Depot(40, 50) Demand: 0.0 TW: [0, 1236]
 5 Customer(42, 65) Demand: 10.0 TW: [15, 67]

@@ -38,6 +38,20 @@ namespace HCVRPTW
             move.i = I;
             move.j = J;
         }
+
+        public Solutionv2(Solutionv2 solution)
+        {
+            GTR = new List<Location>(solution.GTR);
+            Crews = new List<Crew>(solution.Crews);
+            TotalPenalty = solution.TotalPenalty;
+            TotalDrivingCost = solution.TotalDrivingCost;
+            TotalAfterHoursCost = solution.TotalAfterHoursCost;
+            TotalCrewUsageCost = solution.TotalCrewUsageCost;
+            GrandTotal = solution.GrandTotal;
+            move.i = solution.move.i;
+            move.j = solution.move.j;
+        }
+
         public Solutionv2(List<Location> tours, int i, int j)
         {
             GTR = tours;
