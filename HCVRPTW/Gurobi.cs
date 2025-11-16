@@ -406,8 +406,8 @@ public class GurobiVRP
 
         // Print model variables - to comment for experiments
         GRBVar[] vars = model.GetVars();
-        foreach (var v in vars)
-            Console.WriteLine(v.VarName + " = " + v.X);
+        //foreach (var v in vars)
+        //    Console.WriteLine(v.VarName + " = " + v.X);
 
         // Goal function value and operation time in seconds
         double fCelu = model.ObjVal;
