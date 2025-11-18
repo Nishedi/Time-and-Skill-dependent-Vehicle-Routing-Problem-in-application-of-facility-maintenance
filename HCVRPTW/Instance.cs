@@ -19,7 +19,7 @@ namespace HCVRPTW
         public int toLatePenaltyMultiplier = 1;
         public int vehicleCapacity = 900;
         public int endOfWork = 0;
-        public Instance(string filename, double seniorsToJuniorsRatio = 0.5, int toEarlyPenaltyMultiplier = 1, int toLatePenaltyMultiplier = 1, int numberOfCrews = 2, int vehicleCapacity = 90)
+        public Instance(string filename, double seniorsToJuniorsRatio = 0.5, int toEarlyPenaltyMultiplier = 1, int toLatePenaltyMultiplier = 1, int numberOfCrews = 50, int vehicleCapacity = 90)
         {
             FileName = filename;
             ParseSolomonFile(filename);

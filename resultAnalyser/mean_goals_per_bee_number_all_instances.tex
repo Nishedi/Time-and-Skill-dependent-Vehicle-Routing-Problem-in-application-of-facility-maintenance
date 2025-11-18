@@ -1,0 +1,26 @@
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+xlabel = {Srednia wartosc funkcji celu},
+ylabel = {Liczba pszczol},
+legend pos = north west,
+grid = both,
+width=1\linewidth,
+height=0.5\linewidth,
+ybar,
+bar width=15pt,
+symbolic x coords={25,50,75,},
+xtick=data
+]
+\addplot + [mark = *, thick] coordinates
+    {
+(25,20727.270833333332)(50,19040.541666666668)(75,18678.0625)};
+\addlegendentry
+{Srednia wartosc funkcji celu}
+\end{axis}
+\end{tikzpicture}
+\caption
+{Srednia wartosc funkcji celu w zaleznosci od liczby pszczol dla wszystkich instancji}
+\label{fig:mean_goals_per_bee_number_all_instances}
+\end{figure}

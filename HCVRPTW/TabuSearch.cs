@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -61,10 +63,10 @@ namespace HCVRPTW
                     solution.move = (i, j);
                     scenarios.Add(solution);
                     var depotNumber = allLocations.Count(loc => loc.Id == 0);
-                    for (int k = 0; k < Math.Min(Math.Max(depotNumber*1.1,depotNumber+5), crewsCopy.Count); k++)
+                    for (int k = 0; k < Math.Min(Math.Max(depotNumber*1.1,depotNumber+5), crewsCopy.Count); k+=2)
                     {
 
-                        for (int l = 0; l < k; l++)
+                        for (int l = 0; l < k; l+=2)
                         {
                             crewsCopy = new List<Crew>(instance.Crews);
                             if (crewsCopy[k].Type == crewsCopy[l].Type && crewsCopy[k].WorkingTimeWindow.startTime == crewsCopy[l].WorkingTimeWindow.startTime) continue;
@@ -82,6 +84,68 @@ namespace HCVRPTW
             }
             return scenarios.OrderBy(s => s.GrandTotal).ToList();
         }
+
+        public static List<Solutionv2> generateNeighborsv2_pararell(
+                                            List<Location> allLocations,
+                                            List<Crew> crews,
+                                            Instance instance,
+                                            int moveOperator)
+        {
+            var scenarios = new ConcurrentBag<Solutionv2>();
+            int n = allLocations.Count;
+
+            Parallel.For(1, n - 1, i =>
+            {
+                for (int j = 1; j < i; j++)
+                {
+                    List<Location> copy = null;
+
+                    switch (moveOperator)
+                    {
+                        case 0: copy = SwapMove(allLocations, i, j); break;
+                        case 1: copy = InsertMove(allLocations, i, j); break;
+                        case 2: copy = ReverseMove(allLocations, j, i); break;
+                        case 3: copy = TwoOptMove(allLocations, j, i); break;
+                    }
+
+                    var crewsCopy = new List<Crew>(instance.Crews);
+                    var solution = Utils.calculateMetricsv2(
+                        new Solutionv2(copy, crewsCopy), instance);
+
+                    solution.move = (i, j);
+                    scenarios.Add(solution);
+
+                    int depotNumber = allLocations.Count(loc => loc.Id == 0);
+                    int maxK = (int)Math.Min(Math.Max(depotNumber * 1.1, depotNumber + 5), crewsCopy.Count);
+
+                    for (int k = 0; k < maxK; k += 1)
+                    {
+                        for (int l = 0; l < k; l += 1)
+                        {
+                            crewsCopy = new List<Crew>(instance.Crews);
+
+                            if (crewsCopy[k].Type == crewsCopy[l].Type &&
+                                crewsCopy[k].WorkingTimeWindow.startTime ==
+                                crewsCopy[l].WorkingTimeWindow.startTime)
+                                continue;
+
+                            var tmp = crewsCopy[k];
+                            crewsCopy[k] = crewsCopy[l];
+                            crewsCopy[l] = tmp;
+
+                            solution = Utils.calculateMetricsv2(
+                                new Solutionv2(copy, crewsCopy), instance);
+
+                            solution.move = (i, j);
+                            scenarios.Add(solution);
+                        }
+                    }
+                }
+            });
+
+            return scenarios.OrderBy(s => s.GrandTotal).ToList();
+        }
+
 
         public static List<Location> RandomShuttle(List<Location> allLocations)
         {
@@ -110,10 +174,10 @@ namespace HCVRPTW
             return result;
         }
 
-        public static Solutionv2 RunTabuSearch(Instance instance, int iterations, int tabuSize, int moveOperator)
+        public static Solutionv2 RunTabuSearch(Instance instance, int iterations, int tabuSize, int moveOperator, int maxTime=600, bool isLogging = true, bool isParallel = true)
         {
             String[] operators = new String[] {"SwapMove", "InsertMove", "ReverseMove", "TwoOptMove", "BlockSwapMOve", "BlockShiftMove" };
-            
+            List<int> changes = new List<int>();
             //Solution bestSolution = Utils.calculateMetrics(Utils.generateGreedySolution(instance).Tours, instance);
             Solutionv2 bestSolution = Utils.calculateMetricsv2(Utils.generateGreedySolutionv2(instance), instance);
             List<Solutionv2> Elite = new();
@@ -127,11 +191,18 @@ namespace HCVRPTW
             Queue<Solutionv2> TabuList = new Queue<Solutionv2>();
             int notImprovingIterations = 0;
             int notImprovingIterationsv2 = 0;
-            for (int i = 0; i < iterations; i++)
+            int i = 0;
+            var stopwatch = Stopwatch.StartNew();
+            maxTime*=1000;
+            while (stopwatch.ElapsedMilliseconds <= maxTime)
             {
-                //Console.Write(".");
+                
                 Solutionv2 bestNeighbor = null;
-                var neighborhood = generateNeighborsv2(currentSolution.GTR, currentSolution.Crews, instance, moveOperator);
+                List<Solutionv2> neighborhood = null;
+                if(isParallel)
+                    neighborhood = generateNeighborsv2_pararell(currentSolution.GTR, currentSolution.Crews, instance, moveOperator);
+                else
+                    neighborhood = generateNeighborsv2(currentSolution.GTR, currentSolution.Crews, instance, moveOperator);
                 foreach (var neighbor in neighborhood.Take(tabuSize * 10))
                 {
                     bool isTabu = TabuList.Any(tabuSolution => tabuSolution.Equals(neighbor));
@@ -150,7 +221,8 @@ namespace HCVRPTW
                 {
                     bestSolution = bestNeighbor;
                     notImprovingIterations = 0;
-                    //Console.Write(" + ");
+                    if(isLogging)
+                        changes.Add(i);
                     notImprovingIterationsv2 = 0;
                     Elite.Add(bestNeighbor);
                     Elite = Elite.OrderBy(s => s.GrandTotal).Take(5).ToList();
@@ -161,7 +233,7 @@ namespace HCVRPTW
                     notImprovingIterations++;
                     notImprovingIterationsv2++;
                 }
-                if (notImprovingIterations >= iterations * 0.01)
+                if (notImprovingIterations >= iterations * 1)
                 {
                     var random = new Random();
                     int x = random.Next(2);
@@ -179,11 +251,11 @@ namespace HCVRPTW
                     //Console.Write(" - ");
                     notImprovingIterations = 0;
                 }
-                if (notImprovingIterationsv2 >= iterations * 0.1)
-                {
-                    Console.Write(" Break at: " + i);
-                    break;
-                }
+                //if (notImprovingIterationsv2 >= iterations * 1)
+                //{
+                //    Console.Write(" Break at: " + i+" ");
+                //    break;
+                //}
                 TabuList.Enqueue(currentSolution);
                 int dynamicTabu = tabuSize;
 
@@ -198,8 +270,16 @@ namespace HCVRPTW
 
                 if (TabuList.Count > dynamicTabu)
                     TabuList.Dequeue();
+                if(isLogging)
+                    Console.Write($"\rDone: {i}/{iterations} {(i*100/iterations)}");
+                i++;
             }
-            Console.WriteLine(" "+operators[moveOperator]+" "+bestSolution.GrandTotal + " "+(1-bestSolution.GrandTotal/greedySolution.GrandTotal));
+            if(isLogging)
+            {
+                Console.WriteLine("GREEDY: " + greedySolution.GrandTotal + " TABU: " + bestSolution.GrandTotal + " " + (1 - bestSolution.GrandTotal / greedySolution.GrandTotal) + " operator:" + operators[moveOperator]);
+                Console.WriteLine("Changes at iterations: " + string.Join(", ", changes));
+            }
+                
             return bestSolution;
         }
 

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace HCVRPTW
@@ -45,8 +47,9 @@ namespace HCVRPTW
 
             return scenarios.OrderBy(s => s.GrandTotal).ToList()[0];
         }
-        public static Solutionv2 Run(Instance instance, int iterations, int noImprovementLimit, int beesNumber, int moveOperator)
+        public static Solutionv2 Run(Instance instance, int iterations, int noImprovementLimit, int beesNumber, int moveOperator, int maxTime=600, bool isLogging = true)
         {
+            List<int> changes = new List<int>();
             String[] operators = new String[] { "SwapMove", "InsertMove", "ReverseMove", "TwoOptMove"};
             Solutionv2 currSolution = Utils.calculateMetricsv2(Utils.generateGreedySolutionv2(instance), instance);
             length = currSolution.GTR.Count - 1;
@@ -56,7 +59,6 @@ namespace HCVRPTW
                 newSolution.GTR = TabuSearch.RandomShuttle(newSolution.GTR);
                 newSolution = Utils.calculateMetricsv2(newSolution, instance);
                 if (i == 0) bestSolution = new Solutionv2(newSolution);
-                //Console.WriteLine("Initial ABC Solution " + i + ": " + newSolution.GrandTotal);
                 population.Add(newSolution);
                 fitnessValues.Add(newSolution.GrandTotal);
                 noImprovementCounter.Add(0);
@@ -65,10 +67,13 @@ namespace HCVRPTW
                     bestSolution = newSolution;
                 }
             }
-
-            for (int i = 0; i < iterations; i++)
+            int iter = 0;
+            var stopwatch = Stopwatch.StartNew();
+            maxTime *= 1000;
+            while (stopwatch.ElapsedMilliseconds <= maxTime)
             {
-                //Worker Bees Phase
+                if (isLogging)
+                    Console.Write($"\rDone: {iter}/{iterations} {(iter * 100 / iterations)}");
                 for (int j = 0; j < beesNumber; j++)
                 {
                     var newSolution = new Solutionv2(population[j]);
@@ -108,6 +113,7 @@ namespace HCVRPTW
                         if (newSolution.GrandTotal < bestSolution.GrandTotal)
                         {
                             bestSolution = newSolution;
+                            changes.Add(iter);
                         }
                     }
                     else
@@ -171,6 +177,7 @@ namespace HCVRPTW
                         if (newSolution.GrandTotal < bestSolution.GrandTotal)
                         {
                             bestSolution = newSolution;
+                            changes.Add(iter);
                         }
                     }
                     else
@@ -194,17 +201,19 @@ namespace HCVRPTW
                         //Console.WriteLine("Scout bee replaced solution " + j + " with new solution: " + newSolution.GrandTotal);
                         if (newSolution.GrandTotal < bestSolution.GrandTotal)
                         {
+                            changes.Add(iter);
                             bestSolution = newSolution;
                         }
                     }
                 }
+                iter++;
             }
 
-            //foreach (var sol in population)
-            //{
-            //    Console.WriteLine("ABC Population Solution: " + sol.GrandTotal);
-            //}
-            Console.WriteLine($"ABC {operators[moveOperator]} Best: " + bestSolution.GrandTotal);
+            if (isLogging)
+            {
+                Console.WriteLine("GREEDY: " + "N/a" + " TABU: " + bestSolution.GrandTotal + " " + "N/A" + " operator:" + operators[moveOperator]);
+                Console.WriteLine("Changes at iterations: " + string.Join(", ", changes));
+            }
             return bestSolution;
         }
     }

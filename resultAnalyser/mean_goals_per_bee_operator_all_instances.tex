@@ -1,0 +1,26 @@
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+xlabel = {Srednia wartosc funkcji celu},
+ylabel = {Typ operatora},
+legend pos = north west,
+grid = both,
+width=1\linewidth,
+height=0.5\linewidth,
+ybar,
+bar width=15pt,
+symbolic x coords={SwapMove,InsertMove,ReverseMove,TwoOptMove,},
+xtick=data
+]
+\addplot + [mark = *, thick] coordinates
+    {
+(SwapMove,14829.416666666666)(InsertMove,13836.472222222223)(ReverseMove,21299.36111111111)(TwoOptMove,27962.583333333332)};
+\addlegendentry
+{Srednia wartosc funkcji celu}
+\end{axis}
+\end{tikzpicture}
+\caption
+{Srednia wartosc funkcji celu w zaleznosci od typu operatora dla wszystkich instancji}
+\label{fig:mean_goals_per_bee_operator_all_instances}
+\end{figure}

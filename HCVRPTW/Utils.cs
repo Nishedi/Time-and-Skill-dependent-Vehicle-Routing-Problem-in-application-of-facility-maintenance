@@ -117,7 +117,7 @@ namespace HCVRPTW
                                 location.TimeWindow.Start < Crews[crewNumber].WorkingTimeWindow.endTime &&                                                          // Rozpoczęcie okna czasowego nie może być później niż zakońćzenie pracy ekipy
                                 vehicleTime + location.ServiceTime * Crews[crewNumber].serviceTimeMultiplier < Crews[crewNumber].WorkingTimeWindow.endTime + 100 && // Czas ukończenia serwisu lokalizacji nie może być późniejszy niż zakończenie pracy ekipy ale dopuszczane jest małe spóźnienie (Uwaga Radka)
                                 currentLoad + demand <= instance.vehicleCapacity
-                                && location.TimeWindow.Start >= vehicleTime - vehicleTime * 0.2
+                                //&& location.TimeWindow.Start >= vehicleTime - vehicleTime * 0.2
                                 )
                             {
                                 minDistance = distance; //Aktualizacja "najbliższeg"o sąsiada
