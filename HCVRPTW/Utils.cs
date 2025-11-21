@@ -53,6 +53,10 @@ namespace HCVRPTW
                         crew.WorkTime = crew.WorkingTimeWindow.startTime;
 
                     }
+                    if(currentLoad > instance.vehicleCapacity)
+                    {
+                        return new Solutionv2(GTR, Crews, Double.MaxValue, Double.MaxValue, Double.MaxValue, Double.MaxValue, Double.MaxValue);
+                    }
                     currentLoad = 0.0;
                    
                 }

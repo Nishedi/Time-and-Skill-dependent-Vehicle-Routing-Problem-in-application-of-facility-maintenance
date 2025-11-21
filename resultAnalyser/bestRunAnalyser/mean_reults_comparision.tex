@@ -1,0 +1,36 @@
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+xlabel = {Rodzaj pliku},
+ylabel = {Wartoscc funkcji celu},
+legend pos = north west,
+grid = both,
+width=1\linewidth,
+height=0.5\linewidth,
+ybar,
+bar width=15pt,
+symbolic x coords={C1,C2,R1,R2,RC1,RC2,},
+xtick=data
+]
+\addplot + [mark = *, thick] coordinates
+    {
+(C1,17201.11111111111)(C2,31076.875)(R1,8564.25)(R2,9612.272727272728)(RC1,9763.625)(RC2,11443.875)};
+\addlegendentry
+{Greedy}
+\addplot + [mark = *, thick] coordinates
+    {
+(C1,10233.444444444445)(C2,7305.75)(R1,6419.416666666667)(R2,2940.181818181818)(RC1,7073.5)(RC2,3912.125)};
+\addlegendentry
+{Tabu}
+\addplot + [mark = *, thick] coordinates
+    {
+(C1,14239.888888888889)(C2,9524.25)(R1,7434.333333333333)(R2,4283.636363636364)(RC1,8429.75)(RC2,5634.75)};
+\addlegendentry
+{Bee}
+\end{axis}
+\end{tikzpicture}
+\caption
+{Porownanie srednich wartosci wynikow algorytmow dla kazdego rodzaju pliku}
+\label{fig:mean_comparision}
+\end{figure}

@@ -30,26 +30,28 @@ using System.Globalization;
 //    Console.WriteLine("----------------------");
 //}
 
-//var filePath = "pliki//100 lokacji//C201.txt";
-//////var filePath = @"C:\Users\radek\Source\Repos\Time-and-Skill-dependent-Vehicle-Routing-Problem-in-application-of-facility-maintenance\HCVRPTW\pliki\CTEST.txt";
-//Instance instance2 = new Instance(filePath, vehicleCapacity: 90, numberOfCrews: 50);
+//var filePath = "pliki//100 lokacji/C101.txt";
+/*var filePath = "pliki//CTEST.txt";
+////////var filePath = @"C:\Users\radek\Source\Repos\Time-and-Skill-dependent-Vehicle-Routing-Problem-in-application-of-facility-maintenance\HCVRPTW\pliki\CTEST.txt";
+Instance instance2 = new Instance(filePath, vehicleCapacity: 90, numberOfCrews: 50);
 
-////GurobiVRP gurobi = new GurobiVRP();
-////var gurobiResult = gurobi.gurobi_test(instance2);
-////Console.WriteLine("Gurobi Result: " + gurobiResult.Item1);
-//for (int i = 0; i < 1; i++)
-//{
-//    var stopwatch = Stopwatch.StartNew();
-//    TabuSearch.RunTabuSearch(instance2, 100, 10, i, isParallel: false, maxTime: 600);
-//    stopwatch.Stop();
-//    Console.WriteLine("Time elapsed Tabu Search: " + stopwatch.ElapsedMilliseconds + " ms");
+//////GurobiVRP gurobi = new GurobiVRP();
+//////var gurobiResult = gurobi.gurobi_test(instance2);
+//////Console.WriteLine("Gurobi Result: " + gurobiResult.Item1);
+for (int i = 0; i < 1; i++)
+{
+    var stopwatch = Stopwatch.StartNew();
+    var sol = TabuSearch.RunTabuSearch(instance2, 100, 10, i, isParallel: false, maxTime: 6);
+    var currentLoad = 0.0;
+    stopwatch.Stop();
+    Console.WriteLine("Time elapsed Tabu Search: " + stopwatch.ElapsedMilliseconds + " ms");
 
-//    stopwatch = Stopwatch.StartNew();
-//    ArtificialBeeColony.Run(instance2, 10000, 50, 50, i, maxTime:600);
-//    stopwatch.Stop();
-//    Console.WriteLine("Time elapsed ABC: " + stopwatch.ElapsedMilliseconds + " ms");
+    stopwatch = Stopwatch.StartNew();
+    ArtificialBeeColony.Run(instance2, 10000, 50, 50, i, maxTime: 6);
+    stopwatch.Stop();
+    Console.WriteLine("Time elapsed ABC: " + stopwatch.ElapsedMilliseconds + " ms");
 
-//}
+}*/
 /*
 0 Depot(40, 50) Demand: 0.0 TW: [0, 1236]
 5 Customer(42, 65) Demand: 10.0 TW: [15, 67]
@@ -77,7 +79,7 @@ public static class Program
     static void Main(string[] args)
     {
         var exp = new AllFilesExperiments(args[0], args[1], int.Parse(args[2]), int.Parse(args[3]));
-        
+
 
 
 
@@ -190,6 +192,11 @@ public class AllFilesExperiments
             moveOperator = 1;
             choosenFileNames = RC2fileNames;
         }
+        else if (fileTypes =="all")
+        {
+            moveOperator = 1;
+            choosenFileNames = C1fileNames.Concat(C2fileNames).Concat(R1fileNames).Concat(R2fileNames).Concat(RC1fileNames).Concat(RC2fileNames).ToArray();
+        }
         if (choosenAlgorithm == "tabu")
         {
             Console.WriteLine("Starting Tabu Experiments for file type: " + fileTypes);
@@ -205,6 +212,14 @@ public class AllFilesExperiments
             runBeeExperiments();
             stopwatch.Stop();
             Console.WriteLine("End Bee Experiments. Time: " + stopwatch.ElapsedMilliseconds);
+        }
+        else if (choosenAlgorithm == "greedy")
+        {
+            Console.WriteLine("Starting Greedy Experiments for file type: " + fileTypes);
+            var stopwatch = Stopwatch.StartNew();
+            runGreedyExperiments();
+            stopwatch.Stop();
+            Console.WriteLine("End Greedy Experiments. Time: " + stopwatch.ElapsedMilliseconds);
         }
 
         void runBeeExperiments()
@@ -236,6 +251,7 @@ public class AllFilesExperiments
                         bestSol = sol;
                     }
                 }
+                (int seniorCount, int juniorCount) = bestSol.GetCrewCounts();
                 string line = string.Join(",",
                     Path.GetFileName(fileName),
                     100,
@@ -248,10 +264,14 @@ public class AllFilesExperiments
                     bestSol.TotalDrivingCost.ToString(CultureInfo.InvariantCulture),
                     bestSol.TotalAfterHoursCost.ToString(CultureInfo.InvariantCulture),
                     bestSol.TotalCrewUsageCost.ToString(CultureInfo.InvariantCulture),
+                    seniorCount,
+                    juniorCount,
                     bestSol.GrandTotal.ToString(CultureInfo.InvariantCulture),
                     string.Join(";", bestSol.GTR.Select(x => x.Id)),
                     "N/A"
                 );
+
+                File.AppendAllText(csvPath, line + Environment.NewLine);
             }
         }
 
@@ -265,7 +285,7 @@ public class AllFilesExperiments
                 if (!File.Exists(csvPath))
                 {
                     File.AppendAllText(csvPath,
-                        "File,Iterations,TabuSize,Operator,MaxTime,BestCost,TotalPenalty,DrivingCost,AfterHoursCost,CrewCost,GrandTotal,GTR,ExecutionTime\n");
+                        "File,Iterations,TabuSize,Operator,MaxTime,BestCost,TotalPenalty,DrivingCost,AfterHoursCost,CrewCost,SeniorNumber,JuniorNumberGrandTotal,GrandTotal,GTR,ExecutionTime\n");
                 }
                 Solutionv2 bestSol = null;
                 for (int i = 0; i < numberOfRepetition; i++)
@@ -285,6 +305,7 @@ public class AllFilesExperiments
                         bestSol = sol;
                     }
                 }
+                (int seniorCount, int juniorCount) = bestSol.GetCrewCounts();
                 string line = string.Join(",",
                     Path.GetFileName(fileName),
                     100,
@@ -296,9 +317,44 @@ public class AllFilesExperiments
                     bestSol.TotalDrivingCost.ToString(CultureInfo.InvariantCulture),
                     bestSol.TotalAfterHoursCost.ToString(CultureInfo.InvariantCulture),
                     bestSol.TotalCrewUsageCost.ToString(CultureInfo.InvariantCulture),
-                    string.Join(";", bestSol.GTR.Select(x => x.Id)),
+                    seniorCount,
+                    juniorCount,
                     bestSol.GrandTotal.ToString(CultureInfo.InvariantCulture),
+                    string.Join(";", bestSol.GTR.Select(x => x.Id)),
                     "N/A"
+                );
+                File.AppendAllText(csvPath, line + Environment.NewLine);
+            }
+        }
+
+        void runGreedyExperiments()
+        {
+            foreach (string fileName in choosenFileNames)
+            {
+                Instance instance = new Instance("pliki//" + fileName, vehicleCapacity: 90, numberOfCrews: 50);
+                var sw = Stopwatch.StartNew();
+                Solutionv2 sol = Utils.calculateMetricsv2(Utils.generateGreedySolutionv2(instance),instance);
+                sw.Stop();
+                string csvPath = $"greedy_results_{fileTypes}.csv";
+                // jeśli plik nie istnieje → dodaj nagłówek
+                if (!File.Exists(csvPath))
+                {
+                    File.AppendAllText(csvPath,
+                        "File,TotalCost,TotalPenalty,DrivingCost,AfterHoursCost,CrewCost,SeniorNumber,JuniorNumberGrandTotal,GTR,GrandTotal,ExecutionTime\n");
+                }
+                (int seniorCount, int juniorCount) = sol.GetCrewCounts();
+                string line = string.Join(",",
+                    Path.GetFileName(fileName),
+                    sol.TotalCost.ToString(CultureInfo.InvariantCulture),
+                    sol.TotalPenalty.ToString(CultureInfo.InvariantCulture),
+                    sol.TotalDrivingCost.ToString(CultureInfo.InvariantCulture),
+                    sol.TotalAfterHoursCost.ToString(CultureInfo.InvariantCulture),
+                    sol.TotalCrewUsageCost.ToString(CultureInfo.InvariantCulture),
+                    seniorCount,
+                    juniorCount,
+                    string.Join(";", sol.GTR.Select(x => x.Id)),
+                    sol.GrandTotal.ToString(CultureInfo.InvariantCulture),
+                    sw.ElapsedMilliseconds.ToString()
                 );
                 File.AppendAllText(csvPath, line + Environment.NewLine);
             }
@@ -333,7 +389,7 @@ public class AllFilesExperiments
             if (!File.Exists(csvPath))
             {
                 File.AppendAllText(csvPath,
-                    "File,Iterations,TabuSize,Operator,MaxTime,BestCost,TotalPenalty,DrivingCost,AfterHoursCost,CrewCost,GrandTotal,ExecutionTime\n");
+                   "File,Iterations,TabuSize,Operator,MaxTime,TotalCost,TotalPenalty,DrivingCost,AfterHoursCost,CrewCost,SeniorNumber,JuniorNumberGrandTotal,ExecutionTime\n");
             }
 
             int totalRuns =
@@ -405,113 +461,6 @@ public class AllFilesExperiments
             Console.WriteLine("\n\n=== FINISHED ===");
             Console.WriteLine("Results saved to: tabu_results.csv");
         }
-        public static void RunFullTabuTuningParallel()
-        {
-            Console.OutputEncoding = System.Text.Encoding.UTF8;
-
-            string[] filePaths = new string[]
-            {
-        "pliki//100 lokacji//C101.txt",
-        "pliki//100 lokacji//C201.txt",
-        "pliki//100 lokacji//R101.txt",
-        "pliki//100 lokacji//R201.txt",
-        "pliki//100 lokacji//RC101.txt",
-        "pliki//100 lokacji//RC201.txt"
-            };
-
-            int[] iterationsList = { 100 };
-            int[] tabuSizes = { 20, 40, 80 };
-            int[] moveOperators = { 0, 1, 2, 3 };
-            int[] maxTimes = { 600 };
-
-            string csvPath = "tabu_results.csv";
-            var options = new ParallelOptions
-            {
-                MaxDegreeOfParallelism = 4
-            };
-
-            // --------------------------
-            //  Zabezpieczenie pliku CSV
-            // --------------------------
-            object csvLock = new object();
-
-            if (!File.Exists(csvPath))
-            {
-                File.AppendAllText(csvPath,
-                    "File,Iterations,TabuSize,Operator,MaxTime,TotalCost,TotalPenalty,DrivingCost,AfterHoursCost,CrewCost,GrandTotal,ExecutionTime\n");
-            }
-
-            // Tworzymy pełną listę zadań do wykonania równolegle
-            var tasks = new List<(string file, int it, int tabu, int op, int max)>();
-
-            foreach (string file in filePaths)
-                foreach (int it in iterationsList)
-                    foreach (int tabu in tabuSizes)
-                        foreach (int op in moveOperators)
-                            foreach (int max in maxTimes)
-                                tasks.Add((file, it, tabu, op, max));
-
-            int totalRuns = tasks.Count;
-            int currentRun = 0;
-
-            Console.WriteLine($"Total runs: {totalRuns}");
-
-            // --------------------------
-            //  Wersja równoległa
-            // --------------------------
-            Console.WriteLine("number of cpus: " + Environment.ProcessorCount + "-5");
-            Parallel.ForEach(tasks, new ParallelOptions { MaxDegreeOfParallelism = 4 }, task =>
-            {
-                var (file, iterations, tabuSize, op, maxTime) = task;
-
-                Interlocked.Increment(ref currentRun);
-                double progress = (double)currentRun / totalRuns * 100;
-
-                Console.Write(
-                    $"\rProgress: {currentRun}/{totalRuns} ({progress:0.0}%)  Running: {Path.GetFileName(file)}  " +
-                    $"it={iterations} tabu={tabuSize} op={op} t={maxTime}|"
-                );
-
-                Instance instance = new Instance(file, vehicleCapacity: 90, numberOfCrews: 50);
-
-                var sw = Stopwatch.StartNew();
-                Solutionv2 sol = TabuSearch.RunTabuSearch(
-                    instance,
-                    iterations,
-                    tabuSize,
-                    op,
-                    maxTime,
-                    isLogging: false,
-                    isParallel: true
-                );
-                sw.Stop();
-
-                // --------------------------
-                //     Zapis do CSV
-                // --------------------------
-                lock (csvLock)
-                {
-                    string line = string.Join(",",
-                        Path.GetFileName(file),
-                        iterations,
-                        tabuSize,
-                        op,
-                        maxTime,
-                        sol.TotalCost.ToString(CultureInfo.InvariantCulture),
-                        sol.TotalPenalty.ToString(CultureInfo.InvariantCulture),
-                        sol.TotalDrivingCost.ToString(CultureInfo.InvariantCulture),
-                        sol.TotalAfterHoursCost.ToString(CultureInfo.InvariantCulture),
-                        sol.TotalCrewUsageCost.ToString(CultureInfo.InvariantCulture),
-                        sol.GrandTotal.ToString(CultureInfo.InvariantCulture),
-                        sw.ElapsedMilliseconds.ToString()
-                    );
-
-                    File.AppendAllText(csvPath, line + Environment.NewLine);
-                }
-            });
-
-            Console.WriteLine("\n\n=== FINISHED PARALLEL RUN ===");
-        }
     }
 
 
@@ -547,7 +496,7 @@ public class AllFilesExperiments
             {
                 File.AppendAllText(csvPath,
                     "File,Iterations,BeesNumber,Limit,Operator,MaxTime," +
-                    "TotalCost,TotalPenalty,DrivingCost,AfterHoursCost,CrewCost,GrandTotal,ExecutionTime\n");
+                    "TotalCost,TotalPenalty,DrivingCost,AfterHoursCost,CrewCost,SeniorNumber,JuniorNumber,GrandTotal,ExecutionTime\n");
             }
 
             int totalRuns =
@@ -596,7 +545,7 @@ public class AllFilesExperiments
                                     );
 
                                     sw.Stop();
-
+                                    (int seniorCount, int juniorCount) = sol.GetCrewCounts();
                                     string line = string.Join(",",
                                         Path.GetFileName(path),
                                         iterations,
@@ -609,6 +558,8 @@ public class AllFilesExperiments
                                         sol.TotalDrivingCost.ToString(CultureInfo.InvariantCulture),
                                         sol.TotalAfterHoursCost.ToString(CultureInfo.InvariantCulture),
                                         sol.TotalCrewUsageCost.ToString(CultureInfo.InvariantCulture),
+                                        seniorCount,
+                                        juniorCount,
                                         sol.GrandTotal.ToString(CultureInfo.InvariantCulture),
                                         sw.ElapsedMilliseconds
                                     );

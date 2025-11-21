@@ -52,6 +52,28 @@ namespace HCVRPTW
             move.j = solution.move.j;
         }
 
+        public (int seniorCount, int juniorCount) GetCrewCounts()
+        {
+            int crewNumber = GTR.Count(c => c.Id == 0);
+            for (int index = 0; index < GTR.Count-1; index++)
+            {
+                if (GTR[index].Id == 0&& GTR[index+1].Id==0)
+                    crewNumber--;
+            }
+            crewNumber -= 1;
+            int seniorCount = 0;
+            int juniorCount = 0;
+            for (int index = 0; index < crewNumber; index++)
+            {
+                if (Crews[index].Type == CrewType.Seniors)
+                    seniorCount++;
+                if (Crews[index].Type == CrewType.Juniors)
+                    juniorCount++;
+            }
+            
+            return (seniorCount, juniorCount);
+        }
+
         public Solutionv2(List<Location> tours, int i, int j)
         {
             GTR = tours;

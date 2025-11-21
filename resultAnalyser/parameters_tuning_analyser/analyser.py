@@ -215,26 +215,26 @@ create_latex_chart("mean_goals_per_tabu_size_all_instances.tex",
                      "fig:mean_goals_per_tabu_size_all_instances",
                      "Rozmiar tabu",
                      "Srednia wartosc funkcji celu",
-                     [[create_chart_mean_goals_per_tabu_size_per_all_files()]],
-                     ["Srednia wartosc funkcji celu"])
+                   [[create_chart_mean_goals_per_tabu_size_per_all_files()]],
+                   ["Srednia wartosc funkcji celu"])
 
 create_latex_chart("mean_goals_per_tabu_size_per_instance.tex",
                         "Srednia wartosc funkcji celu w zaleznosci od rozmiaru tabu dla poszczegolnych instancji",
                         "fig:mean_goals_per_tabu_size_per_instance",
                         "Rozmiar tabu",
                         "Srednia wartosc funkcji celu",
-                        [ [create_chart_mean_goals_per_tabu_size_per_one_file(filename)] for filename in filenames],
-                        [filename.replace("tabu_results_","").replace(".csv","") for filename in filenames])
+                   [ [create_chart_mean_goals_per_tabu_size_per_one_file(filename)] for filename in filenames],
+                   [filename.replace("tabu_results_","").replace(".csv","") for filename in filenames])
 
 create_latex_chart("mean_goals_per_move_type_all_instances.tex",
                         "Srednia wartosc funkcji celu w zaleznosci od typu ruchu dla wszystkich instancji",
                         "fig:mean_goals_per_move_type_all_instances",
                         "Typ ruchu",
                         "Srednia wartosc funkcji celu",
-                        [[create_chart_mean_goals_per_move_type_per_all_files()]],
-                        ["Srednia wartosc funkcji celu"],
+                   [[create_chart_mean_goals_per_move_type_per_all_files()]],
+                   ["Srednia wartosc funkcji celu"],
 
-                        symbolic_x_coords=("SwapMove","InsertMove","ReverseMove","TwoOptMove")
+                   symbolic_x_coords=("SwapMove","InsertMove","ReverseMove","TwoOptMove")
                    )
 
 
@@ -243,9 +243,9 @@ create_latex_chart("mean_goals_per_move_type_per_instance.tex",
                         "fig:mean_goals_per_move_type_per_instance",
                         "Typ ruchu",
                         "Srednia wartosc funkcji celu",
-                        [ [create_chart_mean_goals_per_move_type_per_file(filename)] for filename in filenames],
-                        [filename.replace("tabu_results_","").replace(".csv","") for filename in filenames],
-                        symbolic_x_coords=("SwapMove","InsertMove","ReverseMove","TwoOptMove")
+                   [ [create_chart_mean_goals_per_move_type_per_file(filename)] for filename in filenames],
+                   [filename.replace("tabu_results_","").replace(".csv","") for filename in filenames],
+                   symbolic_x_coords=("SwapMove","InsertMove","ReverseMove","TwoOptMove")
                    )
 
 
@@ -255,18 +255,18 @@ create_latex_chart("mean_goals_per_bee_number_all_instances.tex",
                         "fig:mean_goals_per_bee_number_all_instances",
                         "Liczba pszczol",
                         "Srednia wartosc funkcji celu",
-                        [[create_chart_mean_goals_per_bee_number_per_all_files()]],
-                        ["Srednia wartosc funkcji celu"],
-                        symbolic_x_coords=("25","50","75")
+                   [[create_chart_mean_goals_per_bee_number_per_all_files()]],
+                   ["Srednia wartosc funkcji celu"],
+                   symbolic_x_coords=("25","50","75")
                    )
 create_latex_chart("mean_goals_per_bee_number_per_instance.tex",
                         "Srednia wartosc funkcji celu w zaleznosci od liczby pszczol dla poszczegolnych instancji",
                         "fig:mean_goals_per_bee_number_per_instance",
                         "Liczba pszczol",
                         "Srednia wartosc funkcji celu",
-                        [ [create_chart_mean_goals_per_bee_number_per_one_file(filename)] for filename in bee_filenames],
-                        [filename.replace("bee_results_","").replace(".csv","") for filename in bee_filenames],
-                        symbolic_x_coords=("25","50","75")
+                   [ [create_chart_mean_goals_per_bee_number_per_one_file(filename)] for filename in bee_filenames],
+                   [filename.replace("bee_results_","").replace(".csv","") for filename in bee_filenames],
+                   symbolic_x_coords=("25","50","75")
                    )
 
 create_latex_chart("mean_goals_per_limit_all_instances.tex",
@@ -274,18 +274,18 @@ create_latex_chart("mean_goals_per_limit_all_instances.tex",
                         "fig:mean_goals_per_limit_all_instances",
                         "Limit",
                         "Srednia wartosc funkcji celu",
-                        [[create_chart_mean_goals_per_limit_per_all_files()]],
-                        ["Srednia wartosc funkcji celu"],
-                        symbolic_x_coords=("20","40")
+                   [[create_chart_mean_goals_per_limit_per_all_files()]],
+                   ["Srednia wartosc funkcji celu"],
+                   symbolic_x_coords=("20","40")
                    )
 create_latex_chart("mean_goals_per_limit_per_instance.tex",
                         "Srednia wartosc funkcji celu w zaleznosci od limitu dla poszczegolnych instancji",
                         "fig:mean_goals_per_limit_per_instance",
                         "Limit",
                         "Srednia wartosc funkcji celu",
-                        [ [create_chart_mean_goals_per_limit_per_one_file(filename)] for filename in bee_filenames],
-                        [filename.replace("bee_results_","").replace(".csv","") for filename in bee_filenames],
-                        symbolic_x_coords=("20","40")
+                   [ [create_chart_mean_goals_per_limit_per_one_file(filename)] for filename in bee_filenames],
+                   [filename.replace("bee_results_","").replace(".csv","") for filename in bee_filenames],
+                   symbolic_x_coords=("20","40")
                    )
 
 create_latex_chart("mean_goals_per_bee_operator_all_instances.tex",
@@ -293,9 +293,9 @@ create_latex_chart("mean_goals_per_bee_operator_all_instances.tex",
                         "fig:mean_goals_per_bee_operator_all_instances",
                         "Typ operatora",
                         "Srednia wartosc funkcji celu",
-                        [[create_chart_mean_goals_per_bee_operator_per_all_files()]],
-                        ["Srednia wartosc funkcji celu"],
-                        symbolic_x_coords=("SwapMove","InsertMove","ReverseMove","TwoOptMove")
+                   [[create_chart_mean_goals_per_bee_operator_per_all_files()]],
+                   ["Srednia wartosc funkcji celu"],
+                   symbolic_x_coords=("SwapMove","InsertMove","ReverseMove","TwoOptMove")
                    )
 
 create_latex_chart("mean_goals_per_bee_operator_per_instance.tex",
@@ -303,9 +303,9 @@ create_latex_chart("mean_goals_per_bee_operator_per_instance.tex",
                         "fig:mean_goals_per_bee_operator_per_instance",
                         "Typ operatora",
                         "Srednia wartosc funkcji celu",
-                        [ [create_chart_mean_goals_per_bee_operator_per_one_file(filename)] for filename in bee_filenames],
-                        [filename.replace("bee_results_","").replace(".csv","") for filename in bee_filenames],
-                        symbolic_x_coords=("SwapMove","InsertMove","ReverseMove","TwoOptMove")
+                   [ [create_chart_mean_goals_per_bee_operator_per_one_file(filename)] for filename in bee_filenames],
+                   [filename.replace("bee_results_","").replace(".csv","") for filename in bee_filenames],
+                   symbolic_x_coords=("SwapMove","InsertMove","ReverseMove","TwoOptMove")
                    )
 
 tab = [0,2,65,2,7,0,42,63,40,44,46,45,0,52,50,48,0,68,51,31,37,34,47,0,90,86,94,92,96,95,0,28,23,66,69,49,0,20,24,8,10,11,9,14,0,5,1,75,0,26,22,21,0,88,89,99,98,91,0,0,67,41,62,74,56,60,0,64,0,43,25,27,29,30,61,0,78,70,73,0,32,33,19,15,0,55,53,58,0,13,18,35,93,97,100,0,36,39,72,0,87,85,84,0,79,80,77,82,83,0,17,12,16,0,81,76,71,38,0,57,54,59,0,6,4,3,0]

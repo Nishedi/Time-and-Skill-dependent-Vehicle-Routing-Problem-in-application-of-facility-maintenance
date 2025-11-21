@@ -2,7 +2,7 @@
   "profiles": {
     "HCVRPTW": {
       "commandName": "Project",
-      "commandLineArgs": "\"C1\" \"tabu\" 10 600"
+      "commandLineArgs": "\"all\" \"greedy\" 10 600"
     }
   }
 }
