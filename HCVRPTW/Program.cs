@@ -78,8 +78,8 @@ public static class Program
 {
     static void Main(string[] args)
     {
-        var exp = new AllFilesExperiments(args[0], args[1], int.Parse(args[2]), int.Parse(args[3]));
-
+        //var exp = new AllFilesExperiments(args[0], args[1], int.Parse(args[2]), int.Parse(args[3]));
+        gurobiMaxInstanceExperiments.gurobiFindMaxInstance(10);
 
 
 
@@ -117,6 +117,76 @@ public static class Program
         //BeeTuning.RunBeeTuningSequential();
         //stopwatch.Stop();
         //Console.WriteLine("time: " + stopwatch.ElapsedMilliseconds);
+    }
+}
+
+public class gurobiMaxInstanceExperiments()
+{
+    static string[] filenames = new string[]{ "C101.txt",
+        "C201.txt",
+        "R101.txt",
+        "R201.txt",
+        "RC101.txt",
+        "RC201.txt"
+    };
+    static int[] fileSizes = new int[] { 9, 10, 11, 12, 13, 14, 15, 16  };
+    public static void gurobiFindMaxInstance(int timeLimit)
+    {
+        string csvPath = $"gurobi_max_instance_results.csv";
+        if (!File.Exists(csvPath))
+        {
+            File.AppendAllText(csvPath,
+                "FileType,FileSize,TimeElapsed\n");
+        }
+        foreach (var n in fileSizes) {
+            foreach (var fn in filenames) { 
+            string filePath = $"pliki//{n} lokacji//C101" + ".txt";
+            Instance instance = new Instance(filePath, vehicleCapacity: 90, numberOfCrews: 10);
+            GurobiVRP gurobi = new GurobiVRP();
+            var stopwatch = Stopwatch.StartNew();
+            var gurobiResult = gurobi.gurobi_test(instance,timeLimit);
+            stopwatch.Stop();
+            Console.WriteLine("Gurobi Result for file " + filePath + ": " + gurobiResult.Item1 + " Time elapsed: "+stopwatch.ElapsedMilliseconds);
+
+            string line = string.Join(",",
+                Path.GetFileName(fn),
+                        n,
+                        stopwatch.ElapsedMilliseconds.ToString()
+                    );
+            File.AppendAllText(csvPath, line + Environment.NewLine);
+
+
+                //stopwatch = Stopwatch.StartNew();
+                //var sol = TabuSearch.RunTabuSearch(instance, 100, 10, 0, isParallel: false, maxTime: n);
+                //var currentLoad = 0.0;
+                //stopwatch.Stop();
+                //Console.WriteLine(sol.GrandTotal+" Time elapsed Tabu Search: " + stopwatch.ElapsedMilliseconds + " ms");
+                //List<Location> test = new List<Location> { instance.Locations[0],
+                //instance.Locations[5],
+                //instance.Locations[3],
+                //instance.Locations[7],
+                //instance.Locations[8],
+                //instance.Locations[0],
+                //instance.Locations[9],
+                //instance.Locations[6],
+                //instance.Locations[4],
+                //instance.Locations[2],
+                //instance.Locations[1],
+                //instance.Locations[0]
+
+
+            }
+        ;
+        };
+        //List<Crew> testc = new List<Crew> { new Crew(0, 0, CrewType.Seniors, 1236 ), new Crew(1, 1, CrewType.Seniors, 1236), };
+        //List<Crew> testc2 = new List<Crew> { new Crew(0, 0, CrewType.Seniors, 1236 ), new Crew(1, 1, CrewType.Juniors, 1236), };
+        //List<Crew> testc3 = new List<Crew> { new Crew(0, 0, CrewType.Juniors, 1236 ), new Crew(1, 1, CrewType.Seniors, 1236), };
+        //List<Crew> testc4 = new List<Crew> { new Crew(0, 0, CrewType.Juniors, 1236 ), new Crew(1, 1, CrewType.Juniors, 1236), };
+        //Console.WriteLine(Utils.calculateMetricsv2(new Solutionv2(test, testc), instance).GrandTotal);
+        //Console.WriteLine(Utils.calculateMetricsv2(new Solutionv2(test, testc2), instance).GrandTotal);
+        //Console.WriteLine(Utils.calculateMetricsv2(new Solutionv2(test, testc3), instance).GrandTotal);
+        //Console.WriteLine(Utils.calculateMetricsv2(new Solutionv2(test, testc4), instance).GrandTotal);
+
     }
 }
 

@@ -58,14 +58,14 @@ public class GurobiVRP
             Console.WriteLine();
         }
     }
-    public Tuple<double, double> gurobi_test(Instance problem)
+    public Tuple<double, double> gurobi_test(Instance problem, int timeLimit = 1)
     {
         // Generate all possible combinations
         GetCombination(problem.Locations);
         // Create a new model
         GRBModel model = new GRBModel(env);
         // Set time limit
-        double minutes = 1;
+        double minutes = timeLimit;
         model.Set(GRB.DoubleParam.TimeLimit, minutes * 60);
         // Definition of variables
         int locationsNumber = problem.Locations.Count;
@@ -77,8 +77,8 @@ public class GurobiVRP
         GRBVar[,] wait = new GRBVar[locationsNumber, problem.numberOfCrews];
         GRBVar[] h = new GRBVar[problem.numberOfCrews];
         GRBVar[] a = new GRBVar[problem.numberOfCrews];
-        foreach(var v in problem.Crews)
-            Console.WriteLine("Crew " + v.Id + " start time: " + v.WorkingTimeWindow.startTime);
+        //foreach(var v in problem.Crews)
+        //    Console.WriteLine("Crew " + v.Id + " start time: " + v.WorkingTimeWindow.startTime);
         // Create variable x[i, j, v]
         for (int i = 0; i < locationsNumber; i++)
         {
@@ -406,9 +406,9 @@ public class GurobiVRP
 
         // Print model variables - to comment for experiments
         GRBVar[] vars = model.GetVars();
-        //foreach (var v in vars)
-        //    Console.WriteLine(v.VarName + " = " + v.X);
-
+        foreach (var v in vars)
+            Console.WriteLine(v.VarName + " = " + v.X);
+        model.Parameters.Threads = 0;
         // Goal function value and operation time in seconds
         double fCelu = model.ObjVal;
         double operationTime = model.Runtime;

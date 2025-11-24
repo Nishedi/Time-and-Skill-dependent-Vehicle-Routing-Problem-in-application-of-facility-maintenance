@@ -63,7 +63,7 @@ namespace HCVRPTW
                     solution.move = (i, j);
                     scenarios.Add(solution);
                     var depotNumber = allLocations.Count(loc => loc.Id == 0);
-                    for (int k = 0; k < Math.Min(Math.Max(depotNumber*1.1,depotNumber+5), crewsCopy.Count); k+=2)
+                    for (int k = 0; k < Math.Min(10/*Math.Max(depotNumber*1.1,depotNumber+5)*/, crewsCopy.Count); k+=2)
                     {
 
                         for (int l = 0; l < k; l+=2)
